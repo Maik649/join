@@ -8,37 +8,56 @@
     <title>Login</title>
     <link rel="stylesheet" href="../css/start_page.css">
     <link rel="stylesheet" href="../css/request.css">
+    <link rel="stylesheet" href="../css/button.css">
 </head>
 
 <body>
     <div class="content-wrepper">
-    <header>
-        <figure class="logo">
-            <img class="logo_page" src="../assets/icons/logo.svg" alt="Logo">
-        </figure>
+        <header>
+            <figure class="logo">
+                <img class="logo_page" src="../assets/icons/logo.svg" alt="Logo">
+            </figure>
 
-        <section class="button-section button-section--desktop">
-            <a class="links" href="../subpages/regist.html">Not a Join User?</a>
-            <button type="button" class="signup" onclick="goToSignup()">Sign up</button>
-        </section>
-    </header>
-    <main>
-        <section class="request-usage">
-         <img src="../assets/icons/pfeil-links-blue.png" alt="Request Icon" >
-         <p><span>10</span>of <span>10</span>requests used today</p>
-        </section>
-    </main>
-    <footer>
-        <section class="footer-content">
-            <a class="links" href="../subpages/privacy_policy.html">Privacy Policy</a>
-            <a class="links" href="../subpages/legal_notice.html">Legal notice</a>
-        </section>
-    </footer>
-</div>
-<script src="../javascript/app.config.js"></script>
-<script src="../javascript/validate.js"></script>
-<script src="../javascript/animation.js"></script>
-<script src="../javascript/login.js"></script>
-<script src="../javascript/regist.js"></script>
+            <section class="button-section button-section--desktop">
+                <a class="links" href="../subpages/regist.html">Not a Join User?</a>
+                <button type="button" class="signup" onclick="goToSignup()">Sign up</button>
+            </section>
+            <section class="request-usage">
+             <img onclick="goToHome()" src="../assets/icons/pfeil-links-blue.png" alt="Request Icon">
+                <p><span>10</span>of <span>10</span>requests used today</p>
+            </section>
+        </header>
+        <main>
+            <section class="request-content">
+                <h1 class="welcome-request">Welcome</h1>
+                <div class="request-wrapper">
+                    <div class="welcomen_content">
+                        <h2>Easily create a ticket by sending an email — no extra steps needed.</h2>
+                        <p>On this platform, you can submit your feature requests via email. Our AI system will
+                            automatically generate a ticket with a deadline and priority level. </p>
+                        <p>A total of 10 requests can be created per day. After this limit, emails can still be sent,
+                            but
+                            they will be manually reviewed by our team instead of generating AI tickets.</p>
+                    </div>
+                    <figure class="request-image">
+                        <img src="../assets/icons/request-main.png" alt="Welcome Request Image">
+                    </figure>
+                </div>
+                <div class="request-button-content --mobile">
+                    <button class="primary-btn --light-blue-btn" onclick="">Create Email Request</button>
+                </div>
+
+            </section>
+
+        </main>
+        <footer>
+            <section class="footer-content">
+                <a class="links" href="../subpages/privacy_policy.html">Privacy Policy</a>
+                <a class="links" href="../subpages/legal_notice.html">Legal notice</a>
+            </section>
+        </footer>
+    </div>
+    <script src="../javascript/animation.js"></script>
 </body>
+
 </html>

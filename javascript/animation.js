@@ -32,8 +32,13 @@ function goToSignup() {
 function goToLogin() {
   window.location.href = "./subpages/login.html";
 }
+
 function goToRequest() {
   window.location.href = "./subpages/welcom_request.html";
+}
+
+function goToHome() {
+  window.location.href = "../index.html";
 }
 
 

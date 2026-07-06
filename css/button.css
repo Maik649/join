@@ -101,6 +101,8 @@
   background-color: rgb(23, 125, 168);
   color: white;
   border: none;
+  width: auto;
+  padding: 0 25px;
 }
 
 .--white-btn {
