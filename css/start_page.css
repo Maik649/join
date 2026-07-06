@@ -186,6 +186,70 @@ body.visited .login-form {
   border-radius: 2px;
 }
 
+.--welcome-page {
+  background-color: rgb(42, 54, 71);
+}
+
+.welcomen.content {
+  width: 800px;
+  background: #ffffff;
+  padding: 48px 65px;
+  border-radius: 30px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 56px;
+}
+
+.icon-text {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 25px;
+  gap: 16px;
+}
+
+.button-text-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.--welcome-page p{
+  font-size: 23px;
+  font-weight: 400;
+  color: rgb(42, 54, 71);
+  text-align: left;
+  line-height: 32px;
+  width: 100%;
+  max-width: 100%;
+  font-family: 'Open Sans', Arial, sans-serif;
+}
+
+.welcomen.content h1 {
+  text-align: center;
+  font-size: 61px;
+  font-weight: 700;
+  position: relative;
+  padding-bottom: 16px;
+  width: 315px;
+  height: 89px;
+}
+
+.welcomen.content h1::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0px;
+  width: 88px;
+  height: 3px;
+  background-color: rgb(94, 192, 233);
+  border-radius: 2px;
+}
+
 .input-wrapper {
   width: 422px;
   position: relative;
@@ -322,6 +386,7 @@ footer .links:hover {
   .login-form .button-group {
     width: 420px;
   }
+
   .logo_page {
     width: 64px !important;
     height: 64px !important;
@@ -333,6 +398,7 @@ footer .links:hover {
 }
 
 @media (max-width: 768px) {
+
   html,
   body {
     overflow-y: auto;

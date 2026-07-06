@@ -29,6 +29,14 @@ function goToSignup() {
   window.location.href = "./subpages/regist.html";
 }
 
+function goToLogin() {
+  window.location.href = "./subpages/login.html";
+}
+function goToRequest() {
+  window.location.href = "./subpages/welcom_request.html";
+}
+
+
 // addTasks.html Select fild Aniemation
 /**
  * Select animate.

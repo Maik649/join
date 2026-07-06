@@ -1,0 +1,33 @@
+.request-usage {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1440px;
+    margin: 140px auto 0;
+}
+
+body.visited .logo {
+    top: 28px;
+    left: 40px;
+    transform: translate(0, 0);
+    transition: none !important;
+}
+
+body.visited .logo_page {
+    width: 46px;
+    height: 56px;
+    transition: none !important;
+}
+
+
+
+.button-section {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 86px;
+    z-index: 6;
+    width: 100%;
+}
