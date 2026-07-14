@@ -114,7 +114,7 @@ async function syncTasksFromDB() {
 async function init() {
   await (window.idbStorage && window.idbStorage.ready ? window.idbStorage.ready : Promise.resolve());
   try { await syncTasksFromDB(); } catch (e) { console.warn("Initial tasks sync failed, continuing with local cache", e); }
-  getCokkieCheck(); greetingText(); getTasksTotal(); getTasksDone(); getTasksProgress(); getAwaitFeedback(); getUrgrentTodo();
+  getCokkieCheck(); greetingText(); getTasksTotal(); getTasksDone(); getTasksProgress(); getAwaitFeedback(); getUrgrentTodo(); getEmailRequestsTotal();
 }
 
 /**
@@ -222,4 +222,20 @@ function getUrgrentTodo() {
     urgent_tasks_day.innerText = nearestUrgentDate.getDate();
     urgent_tasks_year.innerText = nearestUrgentDate.getFullYear();
   }
+}
+
+/**
+ * Get email requests total.
+ */
+function getEmailRequestsTotal() {
+  const el = document.getElementById("task-email-requests");
+  if (!el) return;
+  const tasks = (window.idbStorage && typeof window.idbStorage.getTasksSync === "function") ? window.idbStorage.getTasksSync() : [];
+  let total = 0;
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i] || {};
+    const isEmail = task.source === "email" || !!task.requester || !!task.requesterEmail;
+    if (isEmail) total++;
+  }
+  el.innerText = String(total);
 }

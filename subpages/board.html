@@ -91,6 +91,15 @@
                         <!-- BOARD COLUMNS -->
                         <section class="board">
 
+                            <!-- TRIAGE -->
+                            <div class="column" data-status="triage">
+                                <header class="column-header">
+                                    <span>Triage</span>
+                                </header>
+                                <div class="cards"></div>
+                                <div class="empty">No email requests in triage</div>
+                            </div>
+
                             <!-- TODO -->
                             <div class="column" data-status="todo">
                                 <header class="column-header">
@@ -143,7 +152,10 @@
             <div class="task-overlay" role="dialog" aria-modal="true" aria-label="Task Details">
 
                 <div class="task-overlay-top">
-                    <div class="task-chip" id="taskOverlayCategory"></div>
+                    <div class="task-overlay-top-meta">
+                        <div class="task-chip" id="taskOverlayCategory"></div>
+                        <div class="task-overlay-source-badge" id="taskOverlaySourceBadge" hidden></div>
+                    </div>
 
                     <button class="task-overlay-close" id="taskOverlayClose" type="button" aria-label="Close">
                         ✕
@@ -154,6 +166,15 @@
                 <div class="task-overlay-view" id="taskOverlayView">
                     <h2 class="task-overlay-title" id="taskOverlayTitle"></h2>
                     <p class="task-overlay-desc" id="taskOverlayDesc"></p>
+
+                    <div class="task-overlay-creator" id="taskOverlayCreatorRow" hidden>
+                        <span class="task-overlay-label task-overlay-label--inline">Creator:</span>
+                        <div class="task-overlay-creator-content">
+                            <span class="task-overlay-creator-badge" id="taskOverlayCreatorBadge"></span>
+                            <span class="task-overlay-creator-name" id="taskOverlayCreatorName"></span>
+                            <span class="task-overlay-creator-source" id="taskOverlayCreatorSource"></span>
+                        </div>
+                    </div>
 
                     <div class="task-overlay-row">
                         <span class="task-overlay-label">Due date:</span>

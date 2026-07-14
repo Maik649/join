@@ -102,6 +102,12 @@ body.visited .logo_page {
     display: flex;
 }
 
+#createEmailRequestBtn.is-disabled {
+    opacity: 0.55;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
 .request-wrapper{
     display: flex;
     align-items: center;

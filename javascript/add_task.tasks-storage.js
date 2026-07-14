@@ -59,6 +59,9 @@ function isTaskFormValid(values) {
  * Build task payload.
  */
 function buildTaskPayload(values) {
+  const creator = typeof getSelectedCreatorContact === "function"
+    ? getSelectedCreatorContact()
+    : null;
   return {
     id: getTaskId(),
     title: values.title,
@@ -69,6 +72,9 @@ function buildTaskPayload(values) {
     status: getAddTaskStatus(),
     subtasks: [...pendingSubtasks],
     assigned: [...selectedContacts],
+    creator: creator ? (creator.name || creator.namen || creator.email || creator.id || "") : "",
+    createdBy: creator ? String(creator.id || "") : "",
+    creatorEmail: creator ? (creator.email || creator.mail || "") : "",
   };
 }
 

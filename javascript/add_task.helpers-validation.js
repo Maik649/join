@@ -109,10 +109,12 @@ function clearAddTaskInputs(els) {
 function resetAddTaskState(root) {
   setCategorySelection("");
   clearSelectedContacts();
+  clearSelectedCreator();
   resetPendingSubtasks();
   clearPriorityButtons(root);
   selectedPriority = null;
   refreshAssignedContacts();
+  refreshCreatorContacts();
   setDefaultPriority();
 }
 
@@ -121,6 +123,13 @@ function resetAddTaskState(root) {
  */
 function clearSelectedContacts() {
   if (selectedContacts) selectedContacts.clear();
+}
+
+/**
+ * Clear selected creator.
+ */
+function clearSelectedCreator() {
+  selectedCreatorId = "";
 }
 
 /**
@@ -145,6 +154,14 @@ function clearPriorityButtons(root) {
 function refreshAssignedContacts() {
   populateAssignedContacts();
   renderSelectedContacts();
+}
+
+/**
+ * Refresh creator contacts.
+ */
+function refreshCreatorContacts() {
+  populateCreatorContacts();
+  renderSelectedCreator();
 }
 
 /**

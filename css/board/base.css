@@ -9,7 +9,6 @@ body {
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial,
     sans-serif;
   background: #ffffff;
-  scrollbar-width: none;
   scrollbar-gutter: stable;
   overflow-y: scroll;
 }

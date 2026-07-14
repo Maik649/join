@@ -10,8 +10,6 @@ body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial,
     sans-serif;
-  scrollbar-width: none;
-  overscroll-behavior-x: none;
   scrollbar-gutter: stable;
   overflow-y: scroll;
 }

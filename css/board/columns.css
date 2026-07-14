@@ -203,6 +203,15 @@
   overflow: hidden;
 }
 
+.card-requester {
+  font-size: 14px;
+  color: #5b6b84;
+  margin: 0 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Card progress + footer */
 .card-progress {
   display: flex;

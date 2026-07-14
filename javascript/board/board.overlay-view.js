@@ -131,6 +131,7 @@ function openTaskOverlay(id) {
   openedTaskId = String(id);
   resetOverlayEditMode();
   setOverlayCategory(task);
+  setOverlayMeta(task);
   setOverlayTexts(task);
   setOverlayPriority(task);
   renderOverlayAssigned(task);
@@ -155,6 +156,84 @@ function setOverlayCategory(task) {
   chip.textContent = isTech ? "Technical Task" : "User Story";
   chip.classList.remove("user", "tech");
   chip.classList.add(isTech ? "tech" : "user");
+}
+
+/** @param {BoardTask} task Task to reflect in source and creator meta rows. @returns {void} */
+function setOverlayMeta(task) {
+  setOverlaySourceBadge(task);
+  setOverlayCreator(task);
+}
+
+/** @param {BoardTask} task Task to reflect in the optional source badge. @returns {void} */
+function setOverlaySourceBadge(task) {
+  const badge = document.getElementById("taskOverlaySourceBadge");
+  if (!badge) return;
+  const sourceText = getOverlaySourceBadgeText(task);
+  if (!sourceText) {
+    badge.hidden = true;
+    badge.textContent = "";
+    return;
+  }
+  badge.hidden = false;
+  badge.textContent = sourceText;
+}
+
+/** @param {BoardTask} task Task to reflect in creator meta row. @returns {void} */
+function setOverlayCreator(task) {
+  const row = document.getElementById("taskOverlayCreatorRow");
+  const badge = document.getElementById("taskOverlayCreatorBadge");
+  const name = document.getElementById("taskOverlayCreatorName");
+  const source = document.getElementById("taskOverlayCreatorSource");
+  if (!row || !badge || !name || !source) return;
+
+  const creator = getOverlayCreatorMeta(task);
+  if (!creator.name) {
+    row.hidden = true;
+    return;
+  }
+
+  row.hidden = false;
+  badge.textContent = creator.kind;
+  badge.className = "task-overlay-creator-badge " + creator.kindClass;
+  name.textContent = creator.name;
+  source.textContent = creator.sourceLabel;
+}
+
+/** @param {BoardTask} task Task to inspect. @returns {string} Source badge text or empty string. */
+function getOverlaySourceBadgeText(task) {
+  if (!task || typeof task !== "object") return "";
+  if (task.source === "email") return "AI-generated ticket";
+  return "";
+}
+
+/** @param {BoardTask} task Task to inspect. @returns {{name:string, kind:string, kindClass:string, sourceLabel:string}} Creator display metadata. */
+function getOverlayCreatorMeta(task) {
+  if (!task || typeof task !== "object") {
+    return { name: "", kind: "", kindClass: "", sourceLabel: "" };
+  }
+
+  const requesterName = String(task.requester || "").trim();
+  const requesterEmail = String(task.requesterEmail || "").trim();
+  if (requesterName || requesterEmail) {
+    return {
+      name: requesterName || requesterEmail,
+      kind: "Extern",
+      kindClass: "external",
+      sourceLabel: requesterEmail ? "E-mail" : "Request"
+    };
+  }
+
+  const creatorName = String(task.creator || task.createdBy || "").trim();
+  if (creatorName) {
+    return {
+      name: creatorName,
+      kind: "Member",
+      kindClass: "member",
+      sourceLabel: "Profil"
+    };
+  }
+
+  return { name: "", kind: "", kindClass: "", sourceLabel: "" };
 }
 
 /** @param {BoardTask} task Task to reflect in title, description, and due date. @returns {void} */

@@ -11,6 +11,18 @@ async function populateAssignedContacts() {
   list.forEach((c) => appendAssignedContactRow(dropdown, c));
 }
 
+/**
+ * Loads contacts and populates the creator dropdown.
+ */
+async function populateCreatorContacts() {
+  const dropdown = document.getElementById("creatorDropdown");
+  if (!dropdown) return;
+  resetAssignedDropdown(dropdown);
+  const list = await getContactsListFromStorage();
+  list.forEach((c) => appendCreatorContactRow(dropdown, c));
+  renderSelectedCreator();
+}
+
 
 /**
  * Reset assigned dropdown.
@@ -69,6 +81,29 @@ function buildAssignedContactRow(contact) {
   };
   return row;
 }
+
+/**
+ * Append creator contact row.
+ */
+function appendCreatorContactRow(dropdown, contact) {
+  if (!contact?.id) return;
+  dropdown.appendChild(buildCreatorContactRow(contact));
+}
+
+/**
+ * Build creator contact row.
+ */
+function buildCreatorContactRow(contact) {
+  const row = document.createElement("div");
+  row.className = "contact-option";
+  row.dataset.id = String(contact.id);
+  row.innerHTML = getCreatorContactRowHtml(contact);
+  row.onclick = (e) => {
+    e.stopPropagation();
+    selectCreator(contact.id);
+  };
+  return row;
+}
 /**
  * Get assigned contact row HTML.
  */
@@ -76,6 +111,20 @@ function getAssignedContactRowHtml(contact) {
   const name = getContactLabel(contact);
   const colorClass = addTaskGetContactColorClass(contact);
   const checked = selectedContacts.has(normalizeContactId(contact.id)) ? "checked" : "";
+  return (
+    `<div class="contact-avatar ${colorClass}">${addTaskGetInitials(name)}</div>` +
+    `<span>${name}</span>` +
+    `<input type="checkbox" ${checked}>`
+  );
+}
+
+/**
+ * Get creator contact row HTML.
+ */
+function getCreatorContactRowHtml(contact) {
+  const name = getContactLabel(contact);
+  const colorClass = addTaskGetContactColorClass(contact);
+  const checked = normalizeContactId(contact.id) === selectedCreatorId ? "checked" : "";
   return (
     `<div class="contact-avatar ${colorClass}">${addTaskGetInitials(name)}</div>` +
     `<span>${name}</span>` +
@@ -91,6 +140,17 @@ function toggleContact(id) {
   selectedContacts.has(key) ? selectedContacts.delete(key) : selectedContacts.add(key);
   updateAssignedCheckboxes();
   renderSelectedContacts();
+}
+
+/**
+ * Select creator contact.
+ * @param {string} id Contact ID
+ */
+function selectCreator(id) {
+  selectedCreatorId = normalizeContactId(id);
+  updateCreatorCheckboxes();
+  renderSelectedCreator();
+  closeCreatorDropdown(getCreatorDropdownEls());
 }
 /**
  * Updates the checked state of checkboxes in the existing
@@ -108,6 +168,20 @@ function updateAssignedCheckboxes() {
     input.checked = selectedContacts.has(id);
   });
 }
+
+/**
+ * Updates checked state inside creator dropdown.
+ */
+function updateCreatorCheckboxes() {
+  const dropdown = document.getElementById("creatorDropdown");
+  if (!dropdown) return;
+  const rows = dropdown.querySelectorAll(".contact-option");
+  rows.forEach((row) => {
+    const input = row.querySelector('input[type="radio"]');
+    if (!input) return;
+    input.checked = row.dataset.id === selectedCreatorId;
+  });
+}
 /**
  * Renders selected contacts as avatars.
  */
@@ -117,6 +191,25 @@ async function renderSelectedContacts() {
   if (!selectedContacts.size) return setAssignedPlaceholder(text);
   const view = await buildSelectedContactsView();
   text.innerHTML = view.avatarsHtml + view.moreHtml;
+}
+
+/**
+ * Renders selected creator in the single select field.
+ */
+async function renderSelectedCreator() {
+  const text = document.getElementById("creatorText");
+  if (!text) return;
+  if (!selectedCreatorId) {
+    text.textContent = "Select task creator";
+    return;
+  }
+  const list = await getContactsListForAvatars();
+  const creator = findContactById(list, selectedCreatorId);
+  if (!creator) {
+    text.textContent = "Select task creator";
+    return;
+  }
+  text.textContent = getContactLabel(creator);
 }
 /**
  * Set assigned placeholder.
@@ -193,6 +286,17 @@ function initAssignedDropdown() {
   bindAssignedArrow(els);
   bindAssignedOutside(els);
 }
+
+/**
+ * Initializes dropdown behavior for the creator selector.
+ */
+function initCreatorDropdown() {
+  const els = getCreatorDropdownEls();
+  if (!els) return;
+  bindCreatorInput(els);
+  bindCreatorArrow(els);
+  bindCreatorOutside(els);
+}
 /**
  * Get assigned dropdown elements.
  */
@@ -200,6 +304,17 @@ function getAssignedDropdownEls() {
   const input = document.getElementById("assignedInput");
   const dropdown = document.getElementById("assignedDropdown");
   const arrow = document.getElementById("dropdownArrow");
+  if (!input || !dropdown || !arrow) return null;
+  return { input: input, dropdown: dropdown, arrow: arrow, wrapper: input.closest(".multi-select") };
+}
+
+/**
+ * Get creator dropdown elements.
+ */
+function getCreatorDropdownEls() {
+  const input = document.getElementById("creatorInput");
+  const dropdown = document.getElementById("creatorDropdown");
+  const arrow = document.getElementById("creatorArrow");
   if (!input || !dropdown || !arrow) return null;
   return { input: input, dropdown: dropdown, arrow: arrow, wrapper: input.closest(".multi-select") };
 }
@@ -212,6 +327,16 @@ function bindAssignedInput(els) {
     toggleAssignedDropdown(els);
   };
 }
+
+/**
+ * Bind creator input.
+ */
+function bindCreatorInput(els) {
+  els.input.onclick = (e) => {
+    e.stopPropagation();
+    toggleCreatorDropdown(els);
+  };
+}
 /**
  * Bind assigned arrow.
  */
@@ -219,6 +344,16 @@ function bindAssignedArrow(els) {
   els.arrow.onclick = (e) => {
     e.stopPropagation();
     toggleAssignedDropdown(els);
+  };
+}
+
+/**
+ * Bind creator arrow.
+ */
+function bindCreatorArrow(els) {
+  els.arrow.onclick = (e) => {
+    e.stopPropagation();
+    toggleCreatorDropdown(els);
   };
 }
 /**
@@ -230,6 +365,16 @@ function bindAssignedOutside(els) {
     closeAssignedDropdown(els);
   });
 }
+
+/**
+ * Bind creator outside.
+ */
+function bindCreatorOutside(els) {
+  document.addEventListener("click", (e) => {
+    if (els.wrapper && els.wrapper.contains(e.target)) return;
+    closeCreatorDropdown(els);
+  });
+}
 /**
  * Toggle assigned dropdown.
  */
@@ -237,10 +382,26 @@ function toggleAssignedDropdown(els) {
   if (els.dropdown.classList.contains("hidden")) return openAssignedDropdown(els);
   closeAssignedDropdown(els);
 }
+
+/**
+ * Toggle creator dropdown.
+ */
+function toggleCreatorDropdown(els) {
+  if (els.dropdown.classList.contains("hidden")) return openCreatorDropdown(els);
+  closeCreatorDropdown(els);
+}
 /**
  * Open assigned dropdown.
  */
 function openAssignedDropdown(els) {
+  els.dropdown.classList.remove("hidden");
+  els.arrow.classList.add("open");
+}
+
+/**
+ * Open creator dropdown.
+ */
+function openCreatorDropdown(els) {
   els.dropdown.classList.remove("hidden");
   els.arrow.classList.add("open");
 }
@@ -250,6 +411,24 @@ function openAssignedDropdown(els) {
 function closeAssignedDropdown(els) {
   els.dropdown.classList.add("hidden");
   els.arrow.classList.remove("open");
+}
+
+/**
+ * Close creator dropdown.
+ */
+function closeCreatorDropdown(els) {
+  if (!els) return;
+  els.dropdown.classList.add("hidden");
+  els.arrow.classList.remove("open");
+}
+
+/**
+ * Get selected creator contact from cache.
+ */
+function getSelectedCreatorContact() {
+  if (!selectedCreatorId) return null;
+  const list = getCachedContactsList();
+  return findContactById(list, selectedCreatorId) || null;
 }
 // ------------------ CATEGORY SELECT ------------------
 /**

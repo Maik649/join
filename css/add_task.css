@@ -1,7 +1,8 @@
 @import url('./select_animation.css');
 @import url('./button.css');
 
-#assignedText {
+#assignedText,
+#creatorText {
   display: flex;
   justify-content: space-around;
   color: #999999;

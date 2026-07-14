@@ -24,7 +24,7 @@
             </section>
             <section class="request-usage">
              <img onclick="goToHome()" src="../assets/icons/pfeil-links-blue.png" alt="Request Icon">
-                <p><span>10</span>of <span>10</span>requests used today</p>
+                <p><span id="requestUsedCount">0</span> of <span id="requestLimitCount">10</span> requests used today</p>
             </section>
         </header>
         <main>
@@ -44,9 +44,8 @@
                     </figure>
                 </div>
                 <div class="request-button-content --mobile">
-                    <button class="primary-btn --light-blue-btn" onclick="">Create Email Request</button>
+                    <a id="createEmailRequestBtn" class="primary-btn --light-blue-btn" href="mailto:info@maikpankow.de?subject=Email%20Request&body=Title%3A%0D%0Adescription%3A%0D%0Adue%20date%3A%0D%0Apriority%3A%0D%0Aassigned%3A%20Maik%20Pankow%0D%0Acategory%3A%0D%0Asubtasks%3A">Create Email Request</a>
                 </div>
-
             </section>
 
         </main>
@@ -57,6 +56,8 @@
             </section>
         </footer>
     </div>
+    <script src="../javascript/app.config.js"></script>
+    <script src="../javascript/request-quota.js"></script>
     <script src="../javascript/animation.js"></script>
 </body>
 

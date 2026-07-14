@@ -26,7 +26,7 @@ window.addEventListener("load", () => {
  * Go to signup.
  */
 function goToSignup() {
-  window.location.href = "./subpages/regist.html";
+  window.location.href = "./regist.html";
 }
 
 function goToLogin() {

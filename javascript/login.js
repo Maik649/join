@@ -89,7 +89,7 @@ function guastLogin() {
     sessionStorage.setItem("loggedInUser",JSON.stringify({ mail: "Guest", namen: "Guest" }),);
   } catch (e) {}
 
-  window.location.href = "./subpages/summary.html";
+  window.location.href = "./summary.html";
 }
 /**
  * Verifies whether the entered password matches the stored hash.

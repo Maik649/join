@@ -15,6 +15,11 @@ let pendingSubtasks = [];
  */
 const selectedContacts = new Set();
 /**
+ * Stores selected creator contact ID.
+ * @type {string}
+ */
+let selectedCreatorId = "";
+/**
  * Cached contacts list for assigned UI.
  * @type {Array}
  */
@@ -39,9 +44,11 @@ function initAddTaskPage() {
  */
 function initAddTaskUi() {
   populateAssignedContacts();
+  populateCreatorContacts();
   initPriorityButtons();
   initSubtasks();
   initAssignedDropdown();
+  initCreatorDropdown();
   initCategoryDropdown();
   initValidationModal();
 }

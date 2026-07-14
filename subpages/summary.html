@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg" sizes="32x32" href="../assets/icons/logo.svg">
-    <link rel="stylesheet" href="../css/summary.css">
-    
-    
-    <title>Summary</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg" sizes="32x32" href="../assets/icons/logo.svg">
+  <link rel="stylesheet" href="../css/summary.css">
+
+
+  <title>Summary</title>
 </head>
 
 <body onload="init()">
@@ -20,10 +21,14 @@
 
       <nav class="menu">
         <ul>
-          <li><a href="./summary.html"><span class="menu-button"><img src="../assets/icons/summary-gray.svg" alt="">Summary</span></a></li>
-          <li><a href="./add_task.html"><span class="menu-button"><img src="../assets/icons/addTask-gray.svg" alt="">Add Task</span></a></li>
-          <li><a href="./board.html"><span class="menu-button"><img src="../assets/icons/board-gray.svg" alt="">Board</span></a></li>
-          <li><a href="./contact.html"><span class="menu-button"><img src="../assets/icons/contacts-gray.svg" alt="">Contacts</span></a></li>
+          <li><a href="./summary.html"><span class="menu-button"><img src="../assets/icons/summary-gray.svg"
+                  alt="">Summary</span></a></li>
+          <li><a href="./add_task.html"><span class="menu-button"><img src="../assets/icons/addTask-gray.svg" alt="">Add
+                Task</span></a></li>
+          <li><a href="./board.html"><span class="menu-button"><img src="../assets/icons/board-gray.svg"
+                  alt="">Board</span></a></li>
+          <li><a href="./contact.html"><span class="menu-button"><img src="../assets/icons/contacts-gray.svg"
+                  alt="">Contacts</span></a></li>
         </ul>
       </nav>
 
@@ -42,7 +47,7 @@
               <img src="../assets/icons/logo.svg" class="header-logo">
               <span class="header-title">Kanban Project Management Tool</span>
             </div>
-  
+
             <div class="header-right">
               <a class="header-help" href="./help.html">?</a>
               <div class="header-user-area">
@@ -72,7 +77,7 @@
           <div class="summary-content">
             <div class="kpi-panel">
 
-              
+
               <div class="kpi-top">
                 <div class="kpi-card kpi-card--half" onclick="goToBoard()">
                   <div class="kpi-icon">
@@ -95,38 +100,46 @@
                 </div>
               </div>
 
-              
-              <div class="kpi-card kpi-card--wide" onclick="goToBoard()">
+              <div class="kpi-middel">
+                <div class="kpi-card kpi-card--wide" onclick="goToBoard()">
 
-                <div class="kpi-urgent-left">
-                  <div class="kpi-urgent-icon">
-                    <img src="../assets/icons/urgent-white.png" alt="">
+                  <div class="kpi-urgent-left">
+                    <div class="kpi-urgent-icon">
+                      <img src="../assets/icons/urgent-white.png" alt="">
+                    </div>
+                    <div class="kpi-info">
+                      <div id="todo-status-urgent" class="kpi-number">1</div>
+                      <div class="kpi-label">Urgent</div>
+                    </div>
                   </div>
-                  <div class="kpi-info">
-                    <div id="todo-status-urgent" class="kpi-number">1</div>
-                    <div class="kpi-label">Urgent</div>
+
+                  <div class="kpi-divider"></div>
+
+                  <div class="kpi-urgent-right">
+                    <div id="due-date" class="kpi-date">
+                      <span id="months"></span>
+                      <span id="day"></span>,
+                      <span id="year"></span>
+                    </div>
+                    <div class="kpi-date-sub">Upcoming Deadline</div>
+
                   </div>
                 </div>
-
-                <div class="kpi-divider"></div>
-
-                <div class="kpi-urgent-right">
-                  <div id="due-date" class="kpi-date">
-                    <span id="months"></span>
-                    <span id="day"></span>,
-                    <span id="year"></span>
+                  <div class="kpi-card kpi-card--small" onclick="goToBoard()">
+                    <span id="task-email-requests" class="kpi-number">0</span>
+                    <span class="kpi-label">Email Requests</span>
                   </div>
-                  <div class="kpi-date-sub">Upcoming Deadline</div>
-                </div>
-
               </div>
 
-              
+
+
               <div class="kpi-bottom">
                 <div class="kpi-card kpi-card--small" onclick="goToBoard()">
                   <span id="task-in-board" class="kpi-number">0</span>
                   <span class="kpi-label">Tasks in Board</span>
                 </div>
+
+
 
                 <div class="kpi-card kpi-card--small" onclick="goToBoard()">
                   <span id="task-in-pogress" class="kpi-number">0</span>
@@ -159,4 +172,5 @@
   <script src="../javascript/summary.js"></script>
 
 </body>
+
 </html>

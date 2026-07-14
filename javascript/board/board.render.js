@@ -75,11 +75,22 @@ function buildTaskSearchTitle(task) {
 }
 /** @param {BoardTask} task Task to render as a card. @returns {void} */
 function renderTaskCard(task) {
-  const cardsContainer = getCardsContainer(task.status);
+  const cardsContainer = getCardsContainer(getBoardColumnStatus(task));
   if (!cardsContainer) return;
   const card = createCardElement(task);
   card.innerHTML = buildCardHtml(task);
   cardsContainer.appendChild(card);
+}
+/** @param {BoardTask} task Task to inspect. @returns {string} Effective board column status. */
+function getBoardColumnStatus(task) {
+  const status = String(task && task.status ? task.status : "todo").toLowerCase();
+  if (isEmailRequestTask(task) && (status === "todo" || !status)) return "triage";
+  return status;
+}
+/** @param {BoardTask} task Task to inspect. @returns {boolean} Whether the task originated from an email request. */
+function isEmailRequestTask(task) {
+  if (!task || typeof task !== "object") return false;
+  return task.source === "email" || !!task.requester || !!task.requesterEmail;
 }
 /** @param {string} status Target board status. @returns {HTMLElement|null} Matching column cards container. */
 function getCardsContainer(status) {
@@ -98,17 +109,29 @@ function createCardElement(task) {
 function buildCardHtml(task) {
   const labelText = getLabelText(task);
   const labelClass = getLabelClass(task);
+  const requester = getCardRequesterText(task);
   let html = "";
   html += '<div class="card-content">';
   html += '<div class="label ' + labelClass + '">' + labelText + "</div>";
   html += '<div class="title">' + escapeHtml(task.title || "") + "</div>";
   html += '<div class="desc">' + escapeHtml(task.description || "") + "</div>";
+  if (requester) {
+    html += '<div class="card-requester">Requester: ' + escapeHtml(requester) + "</div>";
+  }
   html += "</div>";
   html += '<div class="card-bottom">';
   html += buildCardSubtaskProgressHtml(task);
   html += buildCardFooterHtml(task);
   html += "</div>";
   return html;
+}
+/** @param {BoardTask} task Task to inspect. @returns {string} Requester display label for email tasks. */
+function getCardRequesterText(task) {
+  const byField = String(task && task.requester ? task.requester : "").trim();
+  if (byField) return byField;
+  const byEmail = String(task && task.requesterEmail ? task.requesterEmail : "").trim();
+  if (byEmail) return byEmail;
+  return "";
 }
 /** @param {BoardTask} task Task to inspect. @returns {string} Human-readable category label. */
 function getLabelText(task) {
