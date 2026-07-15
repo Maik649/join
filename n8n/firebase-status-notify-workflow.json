@@ -1,0 +1,214 @@
+﻿{
+    "name": "Join Firebase Status Notify",
+    "nodes": [
+        {
+            "parameters": {
+                "triggerTimes": {
+                    "item": [
+                        {
+                            "mode": "everyMinute"
+                        }
+                    ]
+                }
+            },
+            "id": "1",
+            "name": "Every Minute",
+            "type": "n8n-nodes-base.cron",
+            "typeVersion": 1,
+            "position": [
+                200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://join-b3c0f-default-rtdb.firebaseio.com/tasks.json",
+                "responseFormat": "json",
+                "options": {}
+            },
+            "id": "2",
+            "name": "Get Tasks",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                430,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/statusNotifySnapshot.json",
+                "responseFormat": "json",
+                "options": {}
+            },
+            "id": "3",
+            "name": "Get Status Snapshot",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                670,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "function normalizeTasks(data) {\n  if (!data) return [];\n  if (Array.isArray(data)) return data.filter(Boolean);\n  return Object.entries(data).map(([id, task]) =\u003e ({ ...(task || {}), id: (task \u0026\u0026 task.id) ? task.id : id }));\n}\n\nfunction isEmailTask(task) {\n  if (!task || typeof task !== \u0027object\u0027) return false;\n  return task.source === \u0027email\u0027 || !!task.requester || !!task.requesterEmail;\n}\n\nfunction extractEmail(task) {\n  const direct = String(task.requesterEmail || \u0027\u0027).trim();\n  if (direct) return direct;\n\n  const fromRequester = String(task.requester || \u0027\u0027).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n  if (fromRequester) return fromRequester[0];\n\n  const fromDescription = String(task.description || \u0027\u0027).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n  if (fromDescription) return fromDescription[0];\n\n  return \u0027\u0027;\n}\n\nconst tasksRaw = $node[\u0027Get Tasks\u0027].json || {};\nconst prevSnapshot = $node[\u0027Get Status Snapshot\u0027].json || {};\nconst tasks = normalizeTasks(tasksRaw);\n\nconst currentSnapshot = {};\nconst changes = [];\n\nfor (const task of tasks) {\n  if (!isEmailTask(task)) continue;\n\n  const id = String(task.id || \u0027\u0027);\n  if (!id) continue;\n\n  const status = String(task.status || \u0027todo\u0027);\n  const requesterEmail = extractEmail(task);\n  const requester = String(task.requester || \u0027\u0027).trim();\n  const title = String(task.title || \u0027Task\u0027);\n\n  currentSnapshot[id] = {\n    status,\n    requesterEmail,\n    requester,\n    title\n  };\n\n  const prev = prevSnapshot[id];\n  if (!prev) continue;\n\n  const prevStatus = String(prev.status || \u0027todo\u0027);\n  if (prevStatus !== status \u0026\u0026 requesterEmail) {\n    changes.push({\n      taskId: id,\n      title,\n      requester,\n      requesterEmail,\n      oldStatus: prevStatus,\n      newStatus: status,\n      changedAt: new Date().toISOString()\n    });\n  }\n}\n\nreturn [{\n  json: {\n    changedCount: changes.length,\n    changes,\n    currentSnapshot\n  }\n}];"
+            },
+            "id": "4",
+            "name": "Build Status Changes",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                930,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "PUT",
+                "url": "https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/statusNotifySnapshot.json",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ $node[\u0027Build Status Changes\u0027].json[\u0027currentSnapshot\u0027] }}",
+                "options": {}
+            },
+            "id": "5",
+            "name": "Save Status Snapshot",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1180,
+                420
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const changes = $node[\u0027Build Status Changes\u0027].json.changes || [];\nreturn changes.map((change) =\u003e ({ json: change }));"
+            },
+            "id": "7",
+            "name": "Split Changes",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1420,
+                160
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "function label(status) {\n  const s = String(status || \u0027\u0027).toLowerCase();\n  if (s === \u0027triage\u0027) return \u0027Triage\u0027;\n  if (s === \u0027todo\u0027) return \u0027To Do\u0027;\n  if (s === \u0027progress\u0027) return \u0027In Progress\u0027;\n  if (s === \u0027feedback\u0027) return \u0027Await Feedback\u0027;\n  if (s === \u0027done\u0027) return \u0027Done\u0027;\n  return status || \u0027Unknown\u0027;\n}\n\nconst taskTitle = String($json.title || \u0027Task\u0027).trim();\nconst fromStatus = label($json.oldStatus || \u0027todo\u0027);\nconst toStatus = label($json.newStatus || \u0027todo\u0027);\nconst requester = String($json.requester || \u0027\u0027).trim();\n\nconst greeting = requester ? `Hallo ${requester},` : \u0027Hallo,\u0027;\nconst subject = `Join Update: ${taskTitle} -\u003e ${toStatus}`;\nconst body =\n  `${greeting}\\n\\n` +\n  `dein Request hat ein Status-Update erhalten.\\n\\n` +\n  `Task: ${taskTitle}\\n` +\n  `Vorher: ${fromStatus}\\n` +\n  `Jetzt: ${toStatus}\\n\\n` +\n  `Wenn du Rueckfragen hast, antworte direkt auf diese E-Mail.\\n\\n` +\n  `Viele Gruesse\\n` +\n  `Join Team`;\n\nreturn [{\n  json: {\n    to: String($json.requesterEmail || \u0027\u0027).trim(),\n    subject,\n    body\n  }\n}];"
+            },
+            "id": "8",
+            "name": "Build Mail Content",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1660,
+                160
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "no-reply@example.com",
+                "toEmail": "={{ $json.to }}",
+                "subject": "={{ $json.subject }}",
+                "emailFormat": "text",
+                "text": "={{ $json.body }}",
+                "options": {}
+            },
+            "id": "9",
+            "name": "Send Email",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1900,
+                160
+            ]
+        }
+    ],
+    "connections": {
+        "Every Minute": {
+            "main": [
+                [
+                    {
+                        "node": "Get Tasks",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Tasks": {
+            "main": [
+                [
+                    {
+                        "node": "Get Status Snapshot",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Status Snapshot": {
+            "main": [
+                [
+                    {
+                        "node": "Build Status Changes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Build Status Changes": {
+            "main": [
+                [
+                    {
+                        "node": "Save Status Snapshot",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Save Status Snapshot": {
+            "main": [
+                [
+                    {
+                        "node": "Split Changes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Split Changes": {
+            "main": [
+                [
+                    {
+                        "node": "Build Mail Content",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Build Mail Content": {
+            "main": [
+                [
+                    {
+                        "node": "Send Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "active": true,
+    "pinData": {},
+    "versionId": "1"
+}

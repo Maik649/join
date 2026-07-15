@@ -174,8 +174,86 @@ function updateTaskStatus(id, status) {
   const tasks = getTasks();
   const idx = findTaskIndexById(id, tasks);
   if (idx === -1) return;
+  const prevStatus = String(tasks[idx].status || "");
+  if (prevStatus === status) return;
   tasks[idx].status = status;
+  notifyStatusChange(tasks[idx], prevStatus, status);
   saveTasks(tasks);
+}
+
+/**
+ * Sends a best-effort webhook notification for email-origin tasks after status changes.
+ * @param {BoardTask} task Updated task payload.
+ * @param {string} oldStatus Previous board status.
+ * @param {string} newStatus New board status.
+ * @returns {void}
+ */
+function notifyStatusChange(task, oldStatus, newStatus) {
+  if (!isEmailOriginTask(task)) return;
+  const webhookUrl = resolveStatusWebhookUrl();
+  if (!webhookUrl) {
+    // Webhook is optional. When empty, Firebase polling workflow handles notifications.
+    return;
+  }
+  const toEmail = String(task.requesterEmail || "").trim();
+  if (!toEmail) {
+    console.warn("Status notification skipped: requesterEmail missing for task", task && task.id);
+    return;
+  }
+
+  const payload = {
+    taskId: String(task.id || ""),
+    title: String(task.title || "Untitled Task"),
+    requester: String(task.requester || ""),
+    requesterEmail: toEmail,
+    oldStatus: String(oldStatus || "todo"),
+    newStatus: String(newStatus || "todo"),
+    source: String(task.source || ""),
+    changedAt: new Date().toISOString(),
+  };
+
+  const body = new URLSearchParams();
+  body.set("taskId", payload.taskId);
+  body.set("title", payload.title);
+  body.set("requester", payload.requester);
+  body.set("requesterEmail", payload.requesterEmail);
+  body.set("oldStatus", payload.oldStatus);
+  body.set("newStatus", payload.newStatus);
+  body.set("source", payload.source);
+  body.set("changedAt", payload.changedAt);
+
+  fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: body.toString(),
+    keepalive: true,
+  }).catch((err) => {
+    console.warn("Status notification webhook failed", err);
+  });
+}
+
+/**
+ * Resolves webhook URL from global config and localStorage fallback.
+ * @returns {string}
+ */
+function resolveStatusWebhookUrl() {
+  const direct = String(window.N8N_STATUS_NOTIFY_WEBHOOK_URL || "").trim();
+  if (direct) return direct;
+  try {
+    return String(localStorage.getItem("join_n8n_status_webhook_url") || "").trim();
+  } catch (e) {
+    return "";
+  }
+}
+
+/**
+ * Checks whether a task originated from an email request.
+ * @param {BoardTask} task Task to inspect.
+ * @returns {boolean}
+ */
+function isEmailOriginTask(task) {
+  if (!task || typeof task !== "object") return false;
+  return task.source === "email" || !!task.requester || !!task.requesterEmail;
 }
 
 /**
