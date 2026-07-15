@@ -1,0 +1,191 @@
+﻿{
+  "name": "Email to Join Task (Fresh)",
+  "nodes": [
+    {
+      "parameters": {
+        "mailbox": "INBOX",
+        "options": {
+          "downloadAttachments": false
+        }
+      },
+      "id": "1",
+      "name": "Email Trigger (IMAP)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseSender(input, fromObj) {\n  let senderName = \u0027\u0027;\n  let senderEmail = \u0027\u0027;\n\n  if (fromObj \u0026\u0026 typeof fromObj === \u0027object\u0027) {\n    if (typeof fromObj.text === \u0027string\u0027 \u0026\u0026 fromObj.text.trim()) input = fromObj.text;\n    if (Array.isArray(fromObj.value) \u0026\u0026 fromObj.value[0]) {\n      senderName = (fromObj.value[0].name || \u0027\u0027).trim();\n      senderEmail = (fromObj.value[0].address || \u0027\u0027).trim();\n    }\n    if (!senderEmail \u0026\u0026 typeof fromObj.address === \u0027string\u0027) senderEmail = fromObj.address.trim();\n    if (!senderName \u0026\u0026 typeof fromObj.name === \u0027string\u0027) senderName = fromObj.name.trim();\n  }\n\n  const raw = (input || \u0027\u0027).toString().trim();\n  if (!senderEmail \u0026\u0026 raw) {\n    const angle = raw.match(/(.*)\u003c([^\u003e]+)\u003e/);\n    if (angle) {\n      senderName = senderName || angle[1].replace(/\\\"/g, \u0027\u0027).trim();\n      senderEmail = angle[2].trim();\n    }\n  }\n\n  if (!senderEmail \u0026\u0026 raw) {\n    const plainMail = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    if (plainMail) senderEmail = plainMail[0].trim();\n  }\n\n  if (!senderName \u0026\u0026 raw) senderName = raw.replace(/\u003c[^\u003e]+\u003e/g, \u0027\u0027).replace(/[\\\"\u0027]/g, \u0027\u0027).trim();\n  if (!senderName) senderName = senderEmail || \u0027Unknown Sender\u0027;\n  if (!senderEmail) senderEmail = \u0027unknown@example.local\u0027;\n\n  return { senderName, senderEmail };\n}\n\nfunction decodeQuotedPrintable(text) {\n  let s = (text || \u0027\u0027).toString();\n  s = s.replace(/=\\r?\\n/g, \u0027\u0027);\n  s = s.replace(/=([A-Fa-f0-9]{2})/g, (_, hex) =\u003e {\n    const code = Number.parseInt(hex, 16);\n    return Number.isNaN(code) ? \u0027\u0027 : String.fromCharCode(code);\n  });\n  return s;\n}\n\nfunction toPlainText(input) {\n  return decodeQuotedPrintable(input || \u0027\u0027)\n    .replace(/\u003cbr\\s*\\/?\\s*\u003e/gi, \u0027\\n\u0027)\n    .replace(/\u003c\\/p\u003e/gi, \u0027\\n\u0027)\n    .replace(/\u003c\\/div\u003e/gi, \u0027\\n\u0027)\n    .replace(/\u003c\\/li\u003e/gi, \u0027\\n\u0027)\n    .replace(/\u003cli[^\u003e]*\u003e/gi, \u0027- \u0027)\n    .replace(/\u003c[^\u003e]+\u003e/g, \u0027\u0027)\n    .replace(/\u0026nbsp;/gi, \u0027 \u0027)\n    .replace(/\u0026amp;/gi, \u0027\u0026\u0027)\n    .replace(/\u0026quot;/gi, \u0027\"\u0027)\n    .replace(/\\r\\n/g, \u0027\\n\u0027)\n    .replace(/\\r/g, \u0027\\n\u0027)\n    .replace(/[\\t ]+/g, \u0027 \u0027)\n    .replace(/\\n{3,}/g, \u0027\\n\\n\u0027)\n    .trim();\n}\n\nfunction parseStructuredFields(text) {\n  const fields = {\n    title: \u0027\u0027,\n    description: \u0027\u0027,\n    dueDateRaw: \u0027\u0027,\n    priorityRaw: \u0027\u0027,\n    assignedRaw: \u0027\u0027,\n    categoryRaw: \u0027\u0027,\n    subtasksRaw: \u0027\u0027,\n    statusRaw: \u0027\u0027\n  };\n\n  const source = (text || \u0027\u0027).toString();\n  if (!source) return fields;\n\n  const keyMap = {\n    title: \u0027title\u0027,\n    titel: \u0027title\u0027,\n    description: \u0027description\u0027,\n    descritpion: \u0027description\u0027,\n    \u0027due date\u0027: \u0027dueDateRaw\u0027,\n    duedate: \u0027dueDateRaw\u0027,\n    due: \u0027dueDateRaw\u0027,\n    priority: \u0027priorityRaw\u0027,\n    prio: \u0027priorityRaw\u0027,\n    assigned: \u0027assignedRaw\u0027,\n    assign: \u0027assignedRaw\u0027,\n    category: \u0027categoryRaw\u0027,\n    catgory: \u0027categoryRaw\u0027,\n    categroy: \u0027categoryRaw\u0027,\n    subtask: \u0027subtasksRaw\u0027,\n    subtasks: \u0027subtasksRaw\u0027,\n    status: \u0027statusRaw\u0027\n  };\n\n  const regex = /(title|titel|description|descritpion|due\\s*date|duedate|due|priority|prio|assigned|assign|category|catgory|categroy|subtasks?|status)\\s*:/ig;\n  const hits = [];\n  let m;\n  while ((m = regex.exec(source)) !== null) {\n    hits.push({\n      label: m[1].toLowerCase().replace(/\\s+/g, \u0027 \u0027).trim(),\n      index: m.index,\n      end: regex.lastIndex\n    });\n  }\n\n  for (let i = 0; i \u003c hits.length; i++) {\n    const cur = hits[i];\n    const next = hits[i + 1];\n    const rawValue = source.slice(cur.end, next ? next.index : source.length).trim();\n    const key = keyMap[cur.label];\n    if (key \u0026\u0026 rawValue) fields[key] = rawValue;\n  }\n\n  return fields;\n}\n\nfunction normalizeDueDate(input) {\n  const raw = (input || \u0027\u0027).toString().trim();\n  if (!raw) {\n    const d = new Date();\n    d.setDate(d.getDate() + 1);\n    return d.toISOString().slice(0, 10);\n  }\n\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)) return raw;\n\n  const m = raw.match(/^(\\d{1,2})[.\\/-](\\d{1,2})[.\\/-](\\d{2}|\\d{4})$/);\n  if (m) {\n    const dd = m[1].padStart(2, \u00270\u0027);\n    const mm = m[2].padStart(2, \u00270\u0027);\n    let yy = m[3];\n    if (yy.length === 2) yy = (Number(yy) \u003e= 70 ? \u002719\u0027 : \u002720\u0027) + yy;\n    return `${yy}-${mm}-${dd}`;\n  }\n\n  const parsed = new Date(raw);\n  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);\n\n  const d = new Date();\n  d.setDate(d.getDate() + 1);\n  return d.toISOString().slice(0, 10);\n}\n\nfunction normalizePriority(input) {\n  const p = (input || \u0027\u0027).toString().toLowerCase().trim();\n  if (p.includes(\u0027urgent\u0027) || p.includes(\u0027high\u0027) || p.includes(\u0027hoch\u0027)) return \u0027high\u0027;\n  if (p.includes(\u0027low\u0027) || p.includes(\u0027niedrig\u0027)) return \u0027low\u0027;\n  return \u0027medium\u0027;\n}\n\nfunction normalizeCategory(input) {\n  const c = (input || \u0027\u0027).toString().toLowerCase().trim();\n  if (c.includes(\u0027tech\u0027) || c.includes(\u0027technical\u0027)) return \u0027tech\u0027;\n  return \u0027user\u0027;\n}\n\nfunction normalizeStatus(input) {\n  const s = (input || \u0027\u0027).toString().toLowerCase().trim();\n  if (s.includes(\u0027progress\u0027)) return \u0027progress\u0027;\n  if (s.includes(\u0027feedback\u0027) || s.includes(\u0027review\u0027)) return \u0027feedback\u0027;\n  if (s.includes(\u0027done\u0027) || s.includes(\u0027finish\u0027)) return \u0027done\u0027;\n  return \u0027todo\u0027;\n}\n\nfunction parseAssigned(input) {\n  return (input || \u0027\u0027)\n    .toString()\n    .split(/[;,\\n]/)\n    .map((v) =\u003e v.trim())\n    .filter(Boolean);\n}\n\nfunction parseSubtasks(input) {\n  const parts = (input || \u0027\u0027)\n    .toString()\n    .split(/\\n|;|\\.{3,}|,/)\n    .map((v) =\u003e v.replace(/^[-*]\\s*/, \u0027\u0027).trim())\n    .filter(Boolean);\n  return parts.map((title) =\u003e ({ title, done: false }));\n}\n\nconst subject = ($json.subject || \u0027Email Request\u0027).toString().trim();\nconst messageIdRaw = ($json.messageId || $json[\u0027message-id\u0027] || ($json.headers \u0026\u0026 $json.headers[\u0027message-id\u0027]) || $json.id || (\u0027mail_\u0027 + Date.now())).toString();\nconst receivedAt = ($json.date || ($json.headers \u0026\u0026 $json.headers.date) || new Date().toISOString()).toString();\nconst sender = parseSender(($json.headers \u0026\u0026 $json.headers.from) || $json.from || \u0027\u0027, $json.from);\nconst bodyText = toPlainText($json.textPlain || $json.text || $json.textHtml || $json.html || \u0027\u0027);\nconst fields = parseStructuredFields(bodyText);\n\nconst taskId = String(Date.now());\nconst messageKey = messageIdRaw\n  .toLowerCase()\n  .replace(/[.#$/\\[\\]]/g, \u0027_\u0027)\n  .replace(/[^a-z0-9_-]/g, \u0027_\u0027)\n  .slice(0, 120);\n\nreturn [{\n  json: {\n    taskId,\n    messageKey,\n    messageIdRaw,\n    senderName: sender.senderName,\n    senderEmail: sender.senderEmail,\n    parsedFields: fields,\n    task: {\n      id: taskId,\n      title: (fields.title || subject || (\u0027Email Request - \u0027 + sender.senderName)).slice(0, 80),\n      description: (fields.description || bodyText || \u0027\u0027).slice(0, 4000),\n      dueDate: normalizeDueDate(fields.dueDateRaw),\n      category: normalizeCategory(fields.categoryRaw),\n      priority: normalizePriority(fields.priorityRaw),\n      status: normalizeStatus(fields.statusRaw),\n      subtasks: parseSubtasks(fields.subtasksRaw),\n      assigned: parseAssigned(fields.assignedRaw),\n      source: \u0027email\u0027,\n      requester: sender.senderName,\n      requesterEmail: sender.senderEmail,\n      receivedAt\n    }\n  }\n}];"
+      },
+      "id": "2",
+      "name": "Build Task Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/{{$json.messageKey}}.json",
+        "responseFormat": "json",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Check Duplicate Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "4",
+      "name": "Is New Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/tasks/{{$node[\u0027Build Task Payload\u0027].json[\u0027taskId\u0027]}}.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $node[\u0027Build Task Payload\u0027].json[\u0027task\u0027] }}",
+        "options": {}
+      },
+      "id": "5",
+      "name": "Create Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1190,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/{{$node[\u0027Build Task Payload\u0027].json[\u0027messageKey\u0027]}}.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { taskId: $node[\u0027Build Task Payload\u0027].json[\u0027taskId\u0027], messageId: $node[\u0027Build Task Payload\u0027].json[\u0027messageIdRaw\u0027], createdAt: $now } }}",
+        "options": {}
+      },
+      "id": "6",
+      "name": "Save Email Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1430,
+        220
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7",
+      "name": "Already Processed (End)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1190,
+        380
+      ]
+    }
+  ],
+  "connections": {
+    "Email Trigger (IMAP)": {
+      "main": [
+        {
+          "node": "Build Task Payload",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Build Task Payload": {
+      "main": [
+        {
+          "node": "Check Duplicate Index",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Check Duplicate Index": {
+      "main": [
+        {
+          "node": "Is New Email?",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    },
+    "Is New Email?": {
+      "main": [
+        [
+          {
+            "node": "Create Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Already Processed (End)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task": {
+      "main": [
+        {
+          "node": "Save Email Index",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "1"
+}
