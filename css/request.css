@@ -226,6 +226,12 @@ body.visited .logo_page {
 
     .welcome-request {
         text-align: start;
+        font-size: 40px;
+    }
+
+    .welcome_content h2 {
+        font-size: 22px;
+        padding: 12px 5px;
     }
 
     .request-usage .back-icon {

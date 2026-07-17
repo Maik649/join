@@ -26,7 +26,7 @@ window.addEventListener("load", () => {
  * Go to signup.
  */
 function goToSignup() {
-  window.location.href = "./regist.html";
+  window.location.href = "./subpages/regist.html";
 }
 
 function goToLogin() {
@@ -40,9 +40,6 @@ function goToRequest() {
 function goToHome() {
   window.location.href = "../index.html";
 }
-
-
-// addTasks.html Select fild Aniemation
 /**
  * Select animate.
  */
