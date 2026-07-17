@@ -1,6 +1,9 @@
 (function () {
   const DAILY_LIMIT = 10;
   const STORAGE_PREFIX = "join_email_request_count_";
+  const maxRequestsText = document.getElementById("maxRequestsText");
+  const requestUsedCountText = document.getElementById("requestUsedCountText");
+  const requestImageMobile = document.getElementById("requestImageMobile");
 
   document.addEventListener("DOMContentLoaded", initRequestQuotaUi);
 
@@ -48,14 +51,35 @@
     if (disabled) {
       btn.classList.add("is-disabled");
       btn.setAttribute("aria-disabled", "true");
-      btn.title = "Daily request limit reached (10/10)";
+      if (maxRequestsText) {
+        maxRequestsText.style.display = "flex";
+        maxRequestsText.style.color = "red";
+
+        maxRequestsText.classList.add("--request-welcome");
+      }
+      if (requestUsedCountText) {
+        requestUsedCountText.classList.remove("--request-welcome");
+        requestUsedCountText.classList.add("--disabled");
+      }
       btn.addEventListener("click", blockDisabledClick);
       return;
     }
-
+    
     btn.classList.remove("is-disabled");
     btn.removeAttribute("aria-disabled");
-    btn.title = "";
+    btn.innerText = "Create Email Request";
+    if (requestUsedCountText) {
+      requestUsedCountText.classList.remove("--disabled");
+      requestUsedCountText.classList.add("--request-welcome");
+    }
+
+    if (maxRequestsText) {
+      maxRequestsText.classList.remove("--request-welcome");
+      if (requestImageMobile) {
+        requestImageMobile.classList.add("request-image");
+      }
+      maxRequestsText.style.display = "none";
+    }
     btn.removeEventListener("click", blockDisabledClick);
   }
 

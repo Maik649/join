@@ -454,6 +454,10 @@ body {
   text-align: center;
 }
 
+.kpi-number.--blue {
+  color: #29abe2;
+} 
+
 .kpi-label {
   font-size: 16px;
   font-weight: 400;
@@ -561,12 +565,20 @@ body {
     border-radius: 26px;
   }
 
+  .kpi-urgent-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-width: 0;
+  }
+
   .kpi-card--wide {
-    width: 480px;
-    height: 135px;
-    padding: 18px 32px;
+    width: 320px;
+    height: 140px;
+    padding: 18px 15px;
     border-radius: 26px;
-    grid-template-columns: 48% 2px 50%;
+    grid-template-columns: 40% 2px 50%;
   }
 
   .kpi-card--small {

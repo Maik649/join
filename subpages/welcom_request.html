@@ -18,13 +18,16 @@
                 <img class="logo_page" src="../assets/icons/logo.svg" alt="Logo">
             </figure>
 
-            <section class="button-section button-section--desktop">
+            <section class="button-section button-section--desktop ">
                 <a class="links" href="../subpages/regist.html">Not a Join User?</a>
                 <button type="button" class="signup" onclick="goToSignup()">Sign up</button>
             </section>
-            <section class="request-usage">
-             <img onclick="goToHome()" src="../assets/icons/pfeil-links-blue.png" alt="Request Icon">
-                <p><span id="requestUsedCount">0</span> of <span id="requestLimitCount">10</span> requests used today</p>
+            <section class="request-usage --header-request-welcome">
+             <img class="back-icon" onclick="goToHome()" src="../assets/icons/pfeil-links-blue.png" alt="Request Icon">
+             <div id="requestUsageText"  class="request-usage-text --desktop">
+                <p id="requestUsedCountText" class="--request-welcome"><span id="requestUsedCount">0 </span>of<span id="requestLimitCount"> 10</span> requests used today</p>
+                <p id="maxRequestsText" style="display: none;">Daily request limit reached (10/10)</p>
+            </div>
             </section>
         </header>
         <main>
@@ -33,13 +36,16 @@
                 <div class="request-wrapper">
                     <div class="welcomen_content">
                         <h2>Easily create a ticket by sending an email — no extra steps needed.</h2>
+                        <figure id="requestImageMobile"  class="request-image --mobile">
+                        <img src="../assets/icons/request-main.png" alt="Welcome Request Image">
+                    </figure>
                         <p>On this platform, you can submit your feature requests via email. Our AI system will
                             automatically generate a ticket with a deadline and priority level. </p>
                         <p>A total of 10 requests can be created per day. After this limit, emails can still be sent,
                             but
                             they will be manually reviewed by our team instead of generating AI tickets.</p>
                     </div>
-                    <figure class="request-image">
+                    <figure class="request-image --desktop">
                         <img src="../assets/icons/request-main.png" alt="Welcome Request Image">
                     </figure>
                 </div>

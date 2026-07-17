@@ -190,6 +190,10 @@ body.visited .login-form {
   background-color: rgb(42, 54, 71);
 }
 
+.--header-wellcome {
+  display: none;
+}
+
 .welcomen.content {
   width: 800px;
   background: #ffffff;
@@ -217,7 +221,7 @@ body.visited .login-form {
   width: 100%;
 }
 
-.--welcome-page p{
+.--welcome-page p {
   font-size: 23px;
   font-weight: 400;
   color: rgb(42, 54, 71);
@@ -228,7 +232,7 @@ body.visited .login-form {
   font-family: 'Open Sans', Arial, sans-serif;
 }
 
-.welcomen.content h1 {
+.welcomen content h1 {
   text-align: center;
   font-size: 61px;
   font-weight: 700;
@@ -238,7 +242,7 @@ body.visited .login-form {
   height: 89px;
 }
 
-.welcomen.content h1::after {
+.welcomen content h1::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -348,6 +352,19 @@ body.visited .login-form {
   left: 0;
 }
 
+.--footer-welcome {
+  display: none;
+  background-color: #2A3647;
+  color: #ffffff;
+  align-items: center;
+}
+
+.--footer-welcome .links {
+  color: #ffffff;
+  font-size: 16px;
+}
+
+
 footer {
   display: flex;
   justify-content: center;
@@ -404,6 +421,10 @@ footer .links:hover {
     overflow-y: auto;
   }
 
+  .--header-wellcome {
+    display: flex;
+  }
+
   main {
     display: flex;
     justify-content: center;
@@ -415,6 +436,19 @@ footer .links:hover {
     margin: 0 auto;
   }
 
+  .--footer-welcome {
+    display: flex;
+    background-color: #2A3647;
+    color: #ffffff;
+    align-items: center;
+    width: 100%;
+  }
+
+  .--footer-welcome .links {
+    color: #ffffff;
+    font-size: 16px;
+  }
+
   footer {
     left: 0;
     right: 0;
@@ -422,7 +456,40 @@ footer .links:hover {
   }
 
   .content-wrepper {
-    min-height: 98svh;
+    min-height: 100svh;
+  }
+
+  .--logo-dark {
+    display: none;
+  }
+
+  .--logo-light {
+    display: block;
+  }
+
+  .--header-wellcome {
+    background-color: #2A3647;
+    color: #ffffff;
+    align-items: flex-start;
+  }
+
+  .--header-wellcome .links {
+    color: #ffffff;
+    font-size: 16px;
+  }
+
+  .signup {
+    font-size: 19px;
+  }
+
+  .--welcome-page p {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .welcomen.content {
+    width: 100%;
+    padding: 28px 14px;
   }
 
   .button-section--desktop {
@@ -436,6 +503,11 @@ footer .links:hover {
     gap: 12px;
     margin: 86px auto;
     z-index: 6;
+  }
+
+  .button-section--mobile {
+    padding: 0px;
+    margin: 150px auto;
   }
 
   .logo {
@@ -469,7 +541,7 @@ footer .links:hover {
     align-items: center;
     flex-direction: column;
     height: calc(100vh - 160px);
-    padding: 80px 16px 0px;
+    padding: 110px 16px 35px;
   }
 
   .login-form {
@@ -521,6 +593,19 @@ footer .links:hover {
 }
 
 @media (max-width: 360px) {
+  .welcomen content h1 {
+    text-align: center;
+    font-size: 61px;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 16px;
+    width: 315px;
+    height: 89px;
+  }
+
+  .--welcome-page p {
+    font-size: 18px;
+  }
 
   .login-form {
     width: 100%;
@@ -545,11 +630,11 @@ footer .links:hover {
   }
 
   .button-section--mobile {
-    padding: 12px;
+    padding: 0px;
   }
 
   footer {
-    padding: 0 12px;
+    padding: 12px 12px;
   }
 }
 
