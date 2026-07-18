@@ -1022,6 +1022,24 @@ body {
     height: 20px;
     display: block;
   }
+
+  .kpi-card--wide {
+    height: 110px;
+    padding: 8px !important;
+    height: 110px !important;
+    grid-template-columns: 50% 1px 50% !important;
+    column-gap: 5px !important;
+  }
+
+  .kpi-date {
+    font-size: 12px !important;
+    right: 15px;
+  }
+
+  .kpi-date-sub {
+    font-size: 9px !important;
+    right: 13px !important;
+  }
 }
 
 /* @media (max-width: 340px) {
@@ -1072,24 +1090,7 @@ body {
     padding: 0;
   }
 
-  .kpi-card--wide {
-    height: 110px;
-    padding: 8px !important;
-    height: 110px !important;
-    grid-template-columns: 50% 1px 50% !important;
-    column-gap: 5px !important;
-    overflow: scroll;
-  }
 
-  .kpi-date {
-    font-size: 12px !important;
-    right: 15px;
-  }
-
-  .kpi-date-sub {
-    font-size: 9px !important;
-    right: 13px !important;
-  }
 }
 
 @media (max-width: 768px) {
