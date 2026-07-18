@@ -153,6 +153,14 @@ body.visited .logo_page {
     max-width: 1440px;
 }
 
+  .request-button-content img {
+    width: 28px;
+    height: auto;
+    margin-top: 1px;
+    margin-left: -30px;
+  }
+
+
 @media (max-width: 768px) {
     .request-image.--desktop {
         display: none;

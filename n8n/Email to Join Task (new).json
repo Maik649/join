@@ -1,0 +1,295 @@
+{
+  "name": "Email to Join Task (Fresh)",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8c23ad6f-520b-4b4d-b97e-4d60daac6d74",
+      "name": "Email Trigger (IMAP)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        3568
+      ],
+      "credentials": {
+        "imap": {
+          "id": "ZMGBUbuXopxrg3gK",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseSender(input, fromObj) {\n  let senderName = '';\n  let senderEmail = '';\n\n  if (fromObj && typeof fromObj === 'object') {\n    if (typeof fromObj.text === 'string' && fromObj.text.trim()) input = fromObj.text;\n    if (Array.isArray(fromObj.value) && fromObj.value[0]) {\n      senderName = (fromObj.value[0].name || '').trim();\n      senderEmail = (fromObj.value[0].address || '').trim();\n    }\n    if (!senderEmail && typeof fromObj.address === 'string') senderEmail = fromObj.address.trim();\n    if (!senderName && typeof fromObj.name === 'string') senderName = fromObj.name.trim();\n  }\n\n  const raw = (input || '').toString().trim();\n  if (!senderEmail && raw) {\n    const angle = raw.match(/(.*)<([^>]+)>/);\n    if (angle) {\n      senderName = senderName || angle[1].replace(/\\\"/g, '').trim();\n      senderEmail = angle[2].trim();\n    }\n  }\n\n  if (!senderEmail && raw) {\n    const plainMail = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    if (plainMail) senderEmail = plainMail[0].trim();\n  }\n\n  if (!senderName && raw) senderName = raw.replace(/<[^>]+>/g, '').replace(/[\\\"']/g, '').trim();\n  if (!senderName) senderName = senderEmail || 'Unknown Sender';\n  if (!senderEmail) senderEmail = 'unknown@example.local';\n\n  return { senderName, senderEmail };\n}\n\nfunction decodeQuotedPrintable(text) {\n  let s = (text || '').toString();\n  s = s.replace(/=\\r?\\n/g, '');\n  s = s.replace(/=([A-Fa-f0-9]{2})/g, (_, hex) => {\n    const code = Number.parseInt(hex, 16);\n    return Number.isNaN(code) ? '' : String.fromCharCode(code);\n  });\n  return s;\n}\n\nfunction toPlainText(input) {\n  return decodeQuotedPrintable(input || '')\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p>/gi, '\\n')\n    .replace(/<\\/div>/gi, '\\n')\n    .replace(/<\\/li>/gi, '\\n')\n    .replace(/<li[^>]*>/gi, '- ')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&quot;/gi, '\"')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .replace(/[\\t ]+/g, ' ')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n}\n\nfunction parseStructuredFields(text) {\n  const fields = {\n    title: '',\n    description: '',\n    dueDateRaw: '',\n    priorityRaw: '',\n    assignedRaw: '',\n    categoryRaw: '',\n    subtasksRaw: '',\n    statusRaw: ''\n  };\n\n  const source = (text || '').toString();\n  if (!source) return fields;\n\n  const keyMap = {\n    title: 'title',\n    titel: 'title',\n    description: 'description',\n    descritpion: 'description',\n    'due date': 'dueDateRaw',\n    duedate: 'dueDateRaw',\n    due: 'dueDateRaw',\n    priority: 'priorityRaw',\n    prio: 'priorityRaw',\n    assigned: 'assignedRaw',\n    assign: 'assignedRaw',\n    category: 'categoryRaw',\n    catgory: 'categoryRaw',\n    categroy: 'categoryRaw',\n    subtask: 'subtasksRaw',\n    subtasks: 'subtasksRaw',\n    status: 'statusRaw'\n  };\n\n  const regex = /(title|titel|description|descritpion|due\\s*date|duedate|due|priority|prio|assigned|assign|category|catgory|categroy|subtasks?|status)\\s*:/ig;\n  const hits = [];\n  let m;\n  while ((m = regex.exec(source)) !== null) {\n    hits.push({\n      label: m[1].toLowerCase().replace(/\\s+/g, ' ').trim(),\n      index: m.index,\n      end: regex.lastIndex\n    });\n  }\n\n  for (let i = 0; i < hits.length; i++) {\n    const cur = hits[i];\n    const next = hits[i + 1];\n    const rawValue = source.slice(cur.end, next ? next.index : source.length).trim();\n    const key = keyMap[cur.label];\n    if (key && rawValue) fields[key] = rawValue;\n  }\n\n  return fields;\n}\n\nfunction normalizeDueDate(input) {\n  const raw = (input || '').toString().trim();\n  if (!raw) {\n    const d = new Date();\n    d.setDate(d.getDate() + 1);\n    return d.toISOString().slice(0, 10);\n  }\n\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)) return raw;\n\n  const m = raw.match(/^(\\d{1,2})[.\\/-](\\d{1,2})[.\\/-](\\d{2}|\\d{4})$/);\n  if (m) {\n    const dd = m[1].padStart(2, '0');\n    const mm = m[2].padStart(2, '0');\n    let yy = m[3];\n    if (yy.length === 2) yy = (Number(yy) >= 70 ? '19' : '20') + yy;\n    return `${yy}-${mm}-${dd}`;\n  }\n\n  const parsed = new Date(raw);\n  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);\n\n  const d = new Date();\n  d.setDate(d.getDate() + 1);\n  return d.toISOString().slice(0, 10);\n}\n\nfunction normalizePriority(input) {\n  const p = (input || '').toString().toLowerCase().trim();\n  if (p.includes('urgent') || p.includes('high') || p.includes('hoch')) return 'high';\n  if (p.includes('low') || p.includes('niedrig')) return 'low';\n  return 'medium';\n}\n\nfunction normalizeCategory(input) {\n  const c = (input || '').toString().toLowerCase().trim();\n  if (c.includes('tech') || c.includes('technical')) return 'tech';\n  return 'user';\n}\n\nfunction normalizeStatus(input) {\n  const s = (input || '').toString().toLowerCase().trim();\n  if (s.includes('progress')) return 'progress';\n  if (s.includes('feedback') || s.includes('review')) return 'feedback';\n  if (s.includes('done') || s.includes('finish')) return 'done';\n  return 'todo';\n}\n\nfunction parseAssigned(input) {\n  return (input || '')\n    .toString()\n    .split(/[;,\\n]/)\n    .map((v) => v.trim())\n    .filter(Boolean);\n}\n\nfunction parseSubtasks(input) {\n  const parts = (input || '')\n    .toString()\n    .split(/\\n|;|\\.{3,}|,/)\n    .map((v) => v.replace(/^[-*]\\s*/, '').trim())\n    .filter(Boolean);\n  return parts.map((title) => ({ title, done: false }));\n}\n\nconst subject = ($json.subject || 'Email Request').toString().trim();\nconst messageIdRaw = ($json.messageId || $json['message-id'] || ($json.headers && $json.headers['message-id']) || $json.id || ('mail_' + Date.now())).toString();\nconst receivedAt = ($json.date || ($json.headers && $json.headers.date) || new Date().toISOString()).toString();\nconst sender = parseSender(($json.headers && $json.headers.from) || $json.from || '', $json.from);\nconst bodyText = toPlainText($json.textPlain || $json.text || $json.textHtml || $json.html || '');\nconst fields = parseStructuredFields(bodyText);\n\nconst taskId = String(Date.now());\nconst messageKey = messageIdRaw\n  .toLowerCase()\n  .replace(/[.#$/\\[\\]]/g, '_')\n  .replace(/[^a-z0-9_-]/g, '_')\n  .slice(0, 120);\n\n\nconst prompt = [\n  'You are an email-to-task extraction agent.',\n  'Read the email and return JSON only.',\n  'Return exactly these string keys: title, description, dueDateRaw, priorityRaw, assignedRaw, categoryRaw, subtasksRaw, statusRaw.',\n  'Rules:',\n  '- title: short task title from the email.',\n  '- description: concise but complete summary of the email.',\n  '- dueDateRaw: a date or empty string if no due date is mentioned.',\n  '- priorityRaw: one of low, medium, high.',\n  '- assignedRaw: one or more names separated by commas, or empty string.',\n  '- categoryRaw: user or tech.',\n  '- subtasksRaw: short subtask items separated by semicolons, or empty string.',\n  '- statusRaw: todo, progress, feedback, or done.',\n  '',\n  `From: ${sender.senderName} <${sender.senderEmail}>`,\n  `Subject: ${subject}`,\n  '',\n  'Body:',\n  bodyText || '(empty)'\n].join('\\n');return [{\n  json: {\n    taskId,\n    messageKey,\n    messageIdRaw,\n    prompt,\n    senderName: sender.senderName,\n    senderEmail: sender.senderEmail,\n    parsedFields: fields,\n    task: {\n      id: taskId,\n      title: (fields.title || subject || ('Email Request - ' + sender.senderName)).slice(0, 80),\n      description: (fields.description || bodyText || '').slice(0, 4000),\n      dueDate: normalizeDueDate(fields.dueDateRaw),\n      category: normalizeCategory(fields.categoryRaw),\n      priority: normalizePriority(fields.priorityRaw),\n      status: normalizeStatus(fields.statusRaw),\n      subtasks: parseSubtasks(fields.subtasksRaw),\n      assigned: parseAssigned(fields.assignedRaw),\n      source: 'email',\n      requester: sender.senderName,\n      requesterEmail: sender.senderEmail,\n      receivedAt\n    }\n  }\n}];"
+      },
+      "id": "4af23754-9a29-4d63-abab-18eacc491385",
+      "name": "Build Task Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        3568
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/{{$json.messageKey}}.json",
+        "options": {}
+      },
+      "id": "d31be143-fbf4-4d38-b211-6cd4f6ab0d31",
+      "name": "Check Duplicate Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2112,
+        3568
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "917afb4f-de28-49e0-8af1-53c424a2cbab",
+      "name": "Is New Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2288,
+        3568
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/tasks/{{$node['Build Task Payload'].json['taskId']}}.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $node['Build Task Payload'].json['task'] }}",
+        "options": {}
+      },
+      "id": "5e9f264d-e81c-4f13-9ec8-d74a44732c07",
+      "name": "Create Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2544,
+        3472
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/{{$node['Build Task Payload'].json['messageKey']}}.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { taskId: $node['Build Task Payload'].json['taskId'], messageId: $node['Build Task Payload'].json['messageIdRaw'], createdAt: $now } }}",
+        "options": {}
+      },
+      "id": "b70dca47-7018-424b-a620-27ae5aa08d21",
+      "name": "Save Email Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2800,
+        3472
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "89a50a0c-ddc4-44a8-ab72-9faf0fe0a5f5",
+      "name": "Already Processed (End)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        3680
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Use this tool to think through ambiguous email details before extracting the task."
+      },
+      "id": "568115b4-acd9-4041-90be-fcb901c716eb",
+      "name": "Think Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        1936,
+        3840
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeDueDate(input) {\n  const raw = String(input || '').trim();\n  if (!raw) return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)) return raw;\n\n  const match = raw.match(/^(\\d{1,2})[.\\/-](\\d{1,2})[.\\/-](\\d{2}|\\d{4})$/);\n  if (match) {\n    const dd = match[1].padStart(2, '0');\n    const mm = match[2].padStart(2, '0');\n    let yy = match[3];\n    if (yy.length === 2) yy = (Number(yy) >= 70 ? '19' : '20') + yy;\n    return `${yy}-${mm}-${dd}`;\n  }\n\n  const parsed = new Date(raw);\n  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);\n\n  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);\n}\n\nfunction normalizePriority(input) {\n  const value = String(input || '').toLowerCase().trim();\n  if (value.includes('urgent') || value.includes('high') || value.includes('hoch')) return 'high';\n  if (value.includes('low') || value.includes('niedrig')) return 'low';\n  return 'medium';\n}\n\nfunction normalizeCategory(input) {\n  const value = String(input || '').toLowerCase().trim();\n  if (value.includes('tech') || value.includes('technical')) return 'tech';\n  return 'user';\n}\n\nfunction normalizeStatus(input) {\n  const value = String(input || '').toLowerCase().trim();\n  if (value.includes('progress')) return 'progress';\n  if (value.includes('feedback') || value.includes('review')) return 'feedback';\n  if (value.includes('done') || value.includes('finish')) return 'done';\n  return 'todo';\n}\n\nfunction parseAssigned(input) {\n  return String(input || '')\n    .split(/[;,\\n]/)\n    .map((value) => value.trim())\n    .filter(Boolean);\n}\n\nfunction parseSubtasks(input) {\n  return String(input || '')\n    .split(/\\n|;|\\.{3,}|,/)\n    .map((value) => value.replace(/^[-*]\\s*/, '').trim())\n    .filter(Boolean)\n    .map((title) => ({ title, done: false }));\n}\n\nconst context = $node['Build Task Payload'].json;\nlet extracted = $json.output ?? $json;\nif (typeof extracted === 'string') {\n  try {\n    extracted = JSON.parse(extracted);\n  } catch {\n    extracted = {};\n  }\n}\nif (!extracted || typeof extracted !== 'object') extracted = {};\n\nconst sourceTask = context.task || {};\nconst title = String(extracted.title || sourceTask.title || context.subject || 'Task').trim();\nconst description = String(extracted.description || sourceTask.description || context.bodyText || '').trim();\n\nreturn [{\n  json: {\n    taskId: context.taskId,\n    messageKey: context.messageKey,\n    messageIdRaw: context.messageIdRaw,\n    senderName: context.senderName,\n    senderEmail: context.senderEmail,\n    parsedFields: extracted,\n    task: {\n      id: context.taskId,\n      title,\n      description,\n      dueDate: normalizeDueDate(extracted.dueDateRaw),\n      category: normalizeCategory(extracted.categoryRaw),\n      priority: normalizePriority(extracted.priorityRaw),\n      status: normalizeStatus(extracted.statusRaw),\n      subtasks: parseSubtasks(extracted.subtasksRaw),\n      assigned: parseAssigned(extracted.assignedRaw),\n      source: 'email',\n      requester: context.senderName,\n      requesterEmail: context.senderEmail,\n      receivedAt: context.receivedAt,\n    },\n  },\n}];"
+      },
+      "id": "85b1d624-175c-4c2f-935b-03c29d6d8560",
+      "name": "Normalize AI Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        3568
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "llama3.2"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        3568
+      ],
+      "id": "c9772253-7949-4c7f-b504-f7b9fdd6ccd4",
+      "name": "Message a model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "4lBY722OTo99LwWx",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Build Task Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Task Payload": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize AI Output": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Index": {
+      "main": [
+        [
+          {
+            "node": "Is New Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Email?": {
+      "main": [
+        [
+          {
+            "node": "Create Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Already Processed (End)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task": {
+      "main": [
+        [
+          {
+            "node": "Save Email Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Normalize AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "timeSavedPerExecution": 1,
+    "executionTimeout": 30
+  },
+  "versionId": "47d946c6-53b2-46c4-a6a6-12df1ac4e7d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9bfd179ff4513628301fe91000b90dbcd4a31c12ce56a213ce15576ae4e29bf1"
+  },
+  "nodeGroups": [],
+  "id": "rcp6FhlONURBt75C",
+  "tags": []
+}

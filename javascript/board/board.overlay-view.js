@@ -193,10 +193,35 @@ function setOverlayCreator(task) {
   }
 
   row.hidden = false;
-  badge.textContent = creator.kind;
+  badge.innerHTML =
+    '<img src="' +
+    getOverlayCreatorKindIcon(creator) +
+    '" class="task-overlay-creator-kind-icon" alt="" aria-hidden="true">' +
+    '<span>' +
+    creator.kind +
+    "</span>";
   badge.className = "task-overlay-creator-badge " + creator.kindClass;
   name.textContent = creator.name;
-  source.textContent = creator.sourceLabel;
+  source.innerHTML =
+    '<img src="' +
+    getOverlayCreatorSourceIcon(creator) +
+    '" class="task-overlay-creator-source-icon" alt="" aria-hidden="true">' +
+    '<span>' +
+    creator.sourceLabel +
+    "</span>";
+}
+
+/** @param {{kindClass:string}} creator Creator metadata. @returns {string} Icon path for creator kind. */
+function getOverlayCreatorKindIcon(creator) {
+  if (creator && creator.kindClass === "external") return "../assets/icons/language.png";
+  return "../assets/icons/group.png";
+}
+
+/** @param {{sourceLabel:string}} creator Creator metadata. @returns {string} Icon path for creator source. */
+function getOverlayCreatorSourceIcon(creator) {
+  const label = String(creator && creator.sourceLabel ? creator.sourceLabel : "").toLowerCase();
+  if (label === "e-mail") return "../assets/icons/attach_email.png";
+  return "../assets/icons/person_blue.png";
 }
 
 /** @param {BoardTask} task Task to inspect. @returns {string} Source badge text or empty string. */

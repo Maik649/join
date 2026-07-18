@@ -102,7 +102,16 @@
   color: white;
   border: none;
   width: auto;
-  padding: 0 25px;
+  padding: 0 35px 0 25px;
+  text-decoration: unset;
+  font-family: 'Open Sans', Arial, sans-serif;
+}
+
+.--light-blue-btn:hover {
+  background-color: #2a3647;
+  color: #ffffff;
+  border: none;
+  text-decoration: unset;
 }
 
 .--white-btn {
@@ -140,31 +149,11 @@
     gap: 16px;
   }
 
-  .primary-btn {
-    display: flex;
-    height: 56px;
-    width: 183px;
-    font-size: 16px;
-    border: unset;
-    color: white;
-    font-family: Inter, Arial, sans-serif;
-    font-weight: 700;
-    line-height: 120%;
-    letter-spacing: 0;
-    background-color: rgb(42, 54, 71);
-    border-radius: 8px;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    padding-right: 0;
+  .--white-btn {
+    background-color: #ffffff;
+    color: #2a3647;
+    border: 1px solid #2a3647;
   }
 
-  .--light-blue-btn {
-    background-color: rgb(23, 125, 168);
-    color: white;
-    border: none;
-    width: auto;
-    padding: 0 25px;
-  }
+
 }

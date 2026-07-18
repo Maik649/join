@@ -204,10 +204,26 @@
 }
 
 .card-requester {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   color: #5b6b84;
   margin: 0 0 8px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-requester-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.card-requester-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }

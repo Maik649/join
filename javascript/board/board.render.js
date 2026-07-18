@@ -115,15 +115,32 @@ function buildCardHtml(task) {
   html += '<div class="label ' + labelClass + '">' + labelText + "</div>";
   html += '<div class="title">' + escapeHtml(task.title || "") + "</div>";
   html += '<div class="desc">' + escapeHtml(task.description || "") + "</div>";
-  if (requester) {
-    html += '<div class="card-requester">Requester: ' + escapeHtml(requester) + "</div>";
-  }
+  
   html += "</div>";
   html += '<div class="card-bottom">';
   html += buildCardSubtaskProgressHtml(task);
   html += buildCardFooterHtml(task);
   html += "</div>";
   return html;
+}
+/** @param {string} requester Resolved requester label. @param {BoardTask} task Task used to resolve requester icon. @returns {string} Requester row markup with icon. */
+function buildCardRequesterHtml(requester, task) {
+  const icon = getCardRequesterIcon(task);
+  return (
+    '<div class="card-requester">' +
+    '<img src="' +
+    icon +
+    '" class="card-requester-icon" alt="" aria-hidden="true">' +
+    '<span class="card-requester-text">Requester: ' +
+    escapeHtml(requester) +
+    "</span>" +
+    "</div>"
+  );
+}
+/** @param {BoardTask} task Task to inspect. @returns {string} Requester icon path. */
+function getCardRequesterIcon(task) {
+  if (isEmailRequestTask(task)) return "../assets/icons/attach_email.png";
+  return "../assets/icons/person.png";
 }
 /** @param {BoardTask} task Task to inspect. @returns {string} Requester display label for email tasks. */
 function getCardRequesterText(task) {

@@ -14,20 +14,23 @@
 <body>
     <div class="content-wrepper">
         <header>
-            <figure class="logo">
-                <img class="logo_page" src="../assets/icons/logo.svg" alt="Logo">
-            </figure>
-
+            <a href="../index.html">
+                <figure class="logo">
+                    <img class="logo_page" src="../assets/icons/logo.svg" alt="Logo">
+                </figure>
+            </a>
             <section class="button-section button-section--desktop ">
                 <a class="links" href="../subpages/regist.html">Not a Join User?</a>
                 <button type="button" class="signup" onclick="goToSignup()">Sign up</button>
             </section>
             <section class="request-usage --header-request-welcome">
-             <img class="back-icon" onclick="goToHome()" src="../assets/icons/pfeil-links-blue.png" alt="Request Icon">
-             <div id="requestUsageText"  class="request-usage-text --desktop">
-                <p id="requestUsedCountText" class="--request-welcome"><span id="requestUsedCount">0 </span>of<span id="requestLimitCount"> 10</span> requests used today</p>
-                <p id="maxRequestsText" style="display: none;">Daily request limit reached (10/10)</p>
-            </div>
+                <img class="back-icon" onclick="goToHome()" src="../assets/icons/pfeil-links-blue.png"
+                    alt="Request Icon">
+                <div id="requestUsageText" class="request-usage-text --desktop">
+                    <p id="requestUsedCountText" class="--request-welcome"><span id="requestUsedCount">0 </span>of<span
+                            id="requestLimitCount"> 10</span> requests used today</p>
+                    <p id="maxRequestsText" style="display: none;">Daily request limit reached (10/10)</p>
+                </div>
             </section>
         </header>
         <main>
@@ -36,9 +39,9 @@
                 <div class="request-wrapper">
                     <div class="welcome_content">
                         <h2>Easily create a ticket by sending an email — no extra steps needed.</h2>
-                        <figure id="requestImageMobile"  class="request-image --mobile">
-                        <img src="../assets/icons/request-main.png" alt="Welcome Request Image">
-                    </figure>
+                        <figure id="requestImageMobile" class="request-image --mobile">
+                            <img src="../assets/icons/request-main.png" alt="Welcome Request Image">
+                        </figure>
                         <p>On this platform, you can submit your feature requests via email. Our AI system will
                             automatically generate a ticket with a deadline and priority level. </p>
                         <p>A total of 10 requests can be created per day. After this limit, emails can still be sent,
@@ -50,7 +53,10 @@
                     </figure>
                 </div>
                 <div class="request-button-content --mobile">
-                    <a id="createEmailRequestBtn" class="primary-btn --light-blue-btn" href="mailto:info@maikpankow.de?subject=Email%20Request&body=Title%3A%0D%0Adescription%3A%0D%0Adue%20date%3A%0D%0Apriority%3A%0D%0Aassigned%3A%20Maik%20Pankow%0D%0Acategory%3A%0D%0Asubtasks%3A">Create Email Request</a>
+                    <a id="createEmailRequestBtn" class="primary-btn --light-blue-btn"
+                        href="mailto:info@maikpankow.de?subject=Email%20Request&body=Title%3A%0D%0Adescription%3A%0D%0Adue%20date%3A%0D%0Apriority%3A%0D%0Aassigned%3A%20Maik%20Pankow%0D%0Acategory%3A%0D%0Asubtasks%3A">Create
+                        Email Request</a>
+                    <img src="../assets/icons/check.svg" alt="Request Icon">
                 </div>
             </section>
 
