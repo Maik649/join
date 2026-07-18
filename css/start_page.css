@@ -34,9 +34,9 @@ header {
 
 .logo {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(1);
+  top: 37px;
+  left: 81px;
+  transform: translate(0, 0);
   transition: all 0.6s ease-in-out;
   z-index: 10;
 }
@@ -133,8 +133,8 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 13px;
-  opacity: 0;
-  transform: translateY(40px);
+  opacity: 1;
+  transform: translateY(0);
   transition: all 0.6s ease;
   position: relative;
 }
@@ -194,6 +194,60 @@ body.visited .login-form {
   display: none;
 }
 
+body.--welcome-page .main-content {
+  position: relative;
+}
+
+body.--welcome-page .main-content > .logo {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1.5);
+  opacity: 0;
+  pointer-events: none;
+  animation: welcome-logo-intro 1.4s ease forwards;
+}
+
+body.--welcome-page #welcome {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: welcome-content-in 0.5s ease 1.1s forwards;
+}
+
+@keyframes welcome-logo-intro {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.0);
+    visibility: hidden;
+  }
+}
+
+@keyframes welcome-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .welcomen.content {
   width: 800px;
   background: #ffffff;
@@ -203,7 +257,7 @@ body.visited .login-form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 56px;
+  gap: 56px;  
 }
 
 .icon-text {

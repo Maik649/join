@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
-     <link rel="icon" type="image/svg" sizes="32x32" href="./assets/icons/logo.svg">
+    <link rel="icon" type="image/svg" sizes="32x32" href="./assets/icons/logo.svg">
     <link rel="stylesheet" href="./css/start_page.css">
     <link rel="stylesheet" href="./css/button.css">
 </head>
@@ -17,21 +17,24 @@
                 <a class="links" href="../subpages/regist.html">Not a Join User?</a>
                 <button type="button" class="signup" onclick="goToSignupFromStart()">Sign up</button>
             </section>
-        <figure class="logo">
-            <img class="logo_page --logo-dark" src="./assets/icons/logo.svg" alt="Logo">
-            <img class="logo_page --logo-light" src="./assets/icons/logo-white.svg" alt="Logo">
+            <figure class="logo">
+                <img class="logo_page --logo-dark --isLoaded" src="./assets/icons/logo.svg" alt="Logo">
+                <img class="logo_page --logo-light" src="./assets/icons/logo-white.svg" alt="Logo">
 
-        </figure>
+            </figure>
 
-        <section class="button-section button-section--desktop">
-            <a class="links" href="../subpages/regist.html">Not a Join User?</a>
-            <button type="button" class="signup" onclick="goToSignupFromStart()">Sign up</button>
-        </section>
-       
-    </header>
-     
+            <section class="button-section button-section--desktop">
+                <a class="links" href="../subpages/regist.html">Not a Join User?</a>
+                <button type="button" class="signup" onclick="goToSignupFromStart()">Sign up</button>
+            </section>
+
+        </header>
+
         <main class="main-content ">
-            <div class="welcomen content">
+            <figure class="logo">
+                <img class="logo_page --logo-light" src="./assets/icons/logo-white.svg" alt="Logo">
+            </figure>
+            <div id="welcome" class="welcomen content">
                 <h1>Welcome</h1>
                 <p>Pick the option that suits your role: create a request as a stakeholder or log in if you're part of
                     the team.</p>
@@ -39,29 +42,31 @@
                 <div class="button-group">
                     <span class="button-text-section">
                         <span class="icon-text">
-                        <img src="./assets/icons/work.png" alt="work" class="line">
-                        <p>Are you a stakeholder?</p>
+                            <img src="./assets/icons/work.png" alt="work" class="line">
+                            <p>Are you a stakeholder?</p>
                         </span>
                         <button type="button" class="primary-btn --light-blue-btn" onclick="goToRequest()">Create
                             request</button>
                     </span>
                     <span class="button-text-section">
                         <span class="icon-text">
-                        <img src="./assets/icons/group.png" alt="team" class="line">
-                        <p>Are you a team member?</p>
+                            <img src="./assets/icons/group.png" alt="team" class="line">
+                            <p>Are you a team member?</p>
                         </span>
-                    <button type="button" class="primary-btn --white-btn" onclick="goToLogin()">Member log-in</button>
+                        <button type="button" class="primary-btn --white-btn" onclick="goToLogin()">Member
+                            log-in</button>
                     </span>
                 </div>
             </div>
         </main>
-         <footer class="footer --footer-welcome">
-        <section class="footer-content">
-            <a class="links" href="../subpages/privacy_policy.html">Privacy Policy</a>
-            <a class="links" href="../subpages/legal_notice.html">Legal notice</a>
-        </section>
-    </footer>
+        <footer class="footer --footer-welcome">
+            <section class="footer-content">
+                <a class="links" href="../subpages/privacy_policy.html">Privacy Policy</a>
+                <a class="links" href="../subpages/legal_notice.html">Legal notice</a>
+            </section>
+        </footer>
     </div>
 </body>
 <script src="./javascript/animation.js"></script>
+
 </html>
