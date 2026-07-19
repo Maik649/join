@@ -1,0 +1,500 @@
+{
+  "name": "Email to Join Task (Fresh)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/{{$json.messageKey}}.json",
+        "options": {}
+      },
+      "id": "ab072938-d423-4066-a7e5-ad37d7b5f2d2",
+      "name": "Check Duplicate Index1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2336,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "info@maikpankow.de",
+        "toEmail": "={{$('Ai Normalize').item.json.task.requesterEmail}}",
+        "subject": "Task wurde erfolgreich erstellt.",
+        "emailFormat": "text",
+        "text": "=Hallo {{ $('Ai Normalize').item.json.senderName }} , \nDein Task wurde in Triage hinzugefÃ¼gt. \nWenn es Fragen gibt, antworte einfach auf die E-mail.\n\nMit freundlichen GrÃ¼ÃŸen \n\ndein Join Team ",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        3712,
+        4000
+      ],
+      "id": "b7bdcfb0-3856-40ef-9293-4533127b6de9",
+      "name": "Send an Email",
+      "webhookId": "2afb06d1-a3a8-4bc2-90b6-a53bdfe5fe45",
+      "credentials": {
+        "smtp": {
+          "id": "hxLGO2GMQKseYcEZ",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e338d0c9-489c-4fbf-bef3-1d59b3eeff5e",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        3776
+      ],
+      "credentials": {
+        "imap": {
+          "id": "ZMGBUbuXopxrg3gK",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseSender(input, fromObj) {\n  let senderName = '';\n  let senderEmail = '';\n\n  if (fromObj && typeof fromObj === 'object') {\n    if (typeof fromObj.text === 'string' && fromObj.text.trim()) input = fromObj.text;\n    if (Array.isArray(fromObj.value) && fromObj.value[0]) {\n      senderName = (fromObj.value[0].name || '').trim();\n      senderEmail = (fromObj.value[0].address || '').trim();\n    }\n    if (!senderEmail && typeof fromObj.address === 'string') senderEmail = fromObj.address.trim();\n    if (!senderName && typeof fromObj.name === 'string') senderName = fromObj.name.trim();\n  }\n\n  const raw = (input || '').toString().trim();\n  if (!senderEmail && raw) {\n    const angle = raw.match(/(.*)<([^>]+)>/);\n    if (angle) {\n      senderName = senderName || angle[1].replace(/\\\"/g, '').trim();\n      senderEmail = angle[2].trim();\n    }\n  }\n\n  if (!senderEmail && raw) {\n    const plainMail = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i);\n    if (plainMail) senderEmail = plainMail[0].trim();\n  }\n\n  if (!senderName && raw) senderName = raw.replace(/<[^>]+>/g, '').replace(/[\\\"']/g, '').trim();\n  if (!senderName) senderName = senderEmail || 'Unknown Sender';\n  if (!senderEmail) senderEmail = 'unknown@example.local';\n\n  return { senderName, senderEmail };\n}\n\nfunction decodeQuotedPrintable(text) {\n  let s = (text || '').toString();\n  s = s.replace(/=\\r?\\n/g, '');\n  s = s.replace(/=([A-Fa-f0-9]{2})/g, (_, hex) => {\n    const code = Number.parseInt(hex, 16);\n    return Number.isNaN(code) ? '' : String.fromCharCode(code);\n  });\n  return s;\n}\n\nfunction toPlainText(input) {\n  return decodeQuotedPrintable(input || '')\n    .replace(/<br\\s*\\/?\\s*>/gi, '\\n')\n    .replace(/<\\/p>/gi, '\\n')\n    .replace(/<\\/div>/gi, '\\n')\n    .replace(/<\\/li>/gi, '\\n')\n    .replace(/<li[^>]*>/gi, '- ')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&quot;/gi, '\"')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .replace(/[\\t ]+/g, ' ')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n}\n\nfunction parseStructuredFields(text) {\n  const fields = {\n    title: '',\n    description: '',\n    dueDateRaw: '',\n    priorityRaw: '',\n    assignedRaw: '',\n    categoryRaw: '',\n    subtasksRaw: '',\n    statusRaw: ''\n  };\n\n  const source = (text || '').toString();\n  if (!source) return fields;\n\n  const keyMap = {\n    title: 'title',\n    titel: 'title',\n    description: 'description',\n    descritpion: 'description',\n    'due date': 'dueDateRaw',\n    duedate: 'dueDateRaw',\n    due: 'dueDateRaw',\n    priority: 'priorityRaw',\n    prio: 'priorityRaw',\n    assigned: 'assignedRaw',\n    assign: 'assignedRaw',\n    category: 'categoryRaw',\n    catgory: 'categoryRaw',\n    categroy: 'categoryRaw',\n    subtask: 'subtasksRaw',\n    subtasks: 'subtasksRaw',\n    status: 'statusRaw'\n  };\n\n  const regex = /(title|titel|description|descritpion|due\\s*date|duedate|due|priority|prio|assigned|assign|category|catgory|categroy|subtasks?|status)\\s*:/ig;\n  const hits = [];\n  let m;\n  while ((m = regex.exec(source)) !== null) {\n    hits.push({\n      label: m[1].toLowerCase().replace(/\\s+/g, ' ').trim(),\n      index: m.index,\n      end: regex.lastIndex\n    });\n  }\n\n  for (let i = 0; i < hits.length; i++) {\n    const cur = hits[i];\n    const next = hits[i + 1];\n    const rawValue = source.slice(cur.end, next ? next.index : source.length).trim();\n    const key = keyMap[cur.label];\n    if (key && rawValue) fields[key] = rawValue;\n  }\n\n  return fields;\n}\n\nfunction normalizeDueDate(input) {\n  const raw = (input || '').toString().trim();\n  if (!raw) {\n    const d = new Date();\n    d.setDate(d.getDate() + 1);\n    return d.toISOString().slice(0, 10);\n  }\n\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)) return raw;\n\n  const m = raw.match(/^(\\d{1,2})[.\\/-](\\d{1,2})[.\\/-](\\d{2}|\\d{4})$/);\n  if (m) {\n    const dd = m[1].padStart(2, '0');\n    const mm = m[2].padStart(2, '0');\n    let yy = m[3];\n    if (yy.length === 2) yy = (Number(yy) >= 70 ? '19' : '20') + yy;\n    return `${yy}-${mm}-${dd}`;\n  }\n\n  const parsed = new Date(raw);\n  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);\n\n  const d = new Date();\n  d.setDate(d.getDate() + 1);\n  return d.toISOString().slice(0, 10);\n}\n\nfunction normalizePriority(input) {\n  const p = (input || '').toString().toLowerCase().trim();\n  if (p.includes('urgent') || p.includes('high') || p.includes('highest') || p.includes('critical') || p.includes('hoch')) return 'high';\n  if (p.includes('low') || p.includes('niedrig')) return 'low';\n  return 'medium';\n}\n\nfunction normalizeCategory(input) {\n  const c = (input || '').toString().toLowerCase().trim();\n  if (c.includes('tech') || c.includes('technical') || c.includes('engineering') || c.includes('dev')) return 'tech';\n  return 'user';\n}\n\nfunction normalizeStatus(input) {\n  const s = (input || '').toString().toLowerCase().trim();\n  if (s.includes('progress')) return 'progress';\n  if (s.includes('feedback') || s.includes('review')) return 'feedback';\n  if (s.includes('done') || s.includes('finish')) return 'done';\n  return 'todo';\n}\n\nfunction parseAssigned(input) {\n  return (input || '')\n    .toString()\n    .split(/[;,\\n]/)\n    .map((v) => v.trim())\n    .filter(Boolean);\n}\n\nfunction parseSubtasks(input) {\n  const parts = (input || '')\n    .toString()\n    .split(/\\n|;|\\.{3,}|,/)\n    .map((v) => v.replace(/^[-*]\\s*/, '').trim())\n    .filter(Boolean);\n  return parts.map((title) => ({ title, done: false }));\n}\n\nconst subject = ($json.subject || 'Email Request').toString().trim();\nconst messageIdRaw = ($json.messageId || $json['message-id'] || ($json.headers && $json.headers['message-id']) || $json.id || ('mail_' + Date.now())).toString();\nconst receivedAt = ($json.date || ($json.headers && $json.headers.date) || new Date().toISOString()).toString();\nconst sender = parseSender(($json.headers && $json.headers.from) || $json.from || '', $json.from);\nconst bodyText = toPlainText($json.textPlain || $json.text || $json.textHtml || $json.html || '');\nconst fields = parseStructuredFields(bodyText);\nconst todayIso = new Date().toISOString().slice(0, 10);\n\nconst taskId = String(Date.now());\nconst messageKey = messageIdRaw\n  .toLowerCase()\n  .replace(/[.#$/\\[\\]]/g, '_')\n  .replace(/[^a-z0-9_-]/g, '_')\n  .slice(0, 120);\n\nconst prompt = [\n  'You are an email-to-task extraction agent.',\n  'Read the email and return ONLY valid JSON (no markdown, no explanation).',\n  'JSON schema (all string values):',\n  '{\"title\":\"\",\"description\":\"\",\"dueDateRaw\":\"\",\"priorityRaw\":\"\",\"assignedRaw\":\"\",\"categoryRaw\":\"\",\"subtasksRaw\":\"\",\"statusRaw\":\"\"}',\n  'Extraction rules:',\n  '- title: short, actionable task title.',\n  '- description: concise but complete summary of request.',\n  '- dueDateRaw: ISO date YYYY-MM-DD if date can be inferred, otherwise empty string.',\n  '- If text says things like \"by August 2nd latest\", convert to YYYY-MM-DD.',\n  '- priorityRaw: high|medium|low (high if text says highest priority / priority over everything else).',\n  '- assignedRaw: comma-separated names, empty if unknown.',\n  '- categoryRaw: tech or user (tech for implementation/development/infrastructure tasks).',\n  '- subtasksRaw: semicolon-separated list of concrete subtasks.',\n  '- statusRaw: todo|progress|feedback|done (default todo).',\n  '',\n  `Today: ${todayIso}`,\n  `From: ${sender.senderName} <${sender.senderEmail}>`,\n  `Subject: ${subject}`,\n  '',\n  'Body:',\n  bodyText || '(empty)'\n].join('\\n');\n\nreturn [{\n  json: {\n    taskId,\n    messageKey,\n    messageIdRaw,\n    prompt,\n    senderName: sender.senderName,\n    senderEmail: sender.senderEmail,\n    receivedAt,\n    subject,\n    bodyText,\n    parsedFields: fields,\n    task: {\n      id: taskId,\n      title: (fields.title || subject || ('Email Request - ' + sender.senderName)).slice(0, 80),\n      description: (fields.description || bodyText || '').slice(0, 4000),\n      dueDate: normalizeDueDate(fields.dueDateRaw),\n      category: normalizeCategory(fields.categoryRaw),\n      priority: normalizePriority(fields.priorityRaw),\n      status: normalizeStatus(fields.statusRaw),\n      subtasks: parseSubtasks(fields.subtasksRaw),\n      assigned: parseAssigned(fields.assignedRaw),\n      source: 'email',\n      requester: sender.senderName,\n      requesterEmail: sender.senderEmail,\n      receivedAt\n    }\n  }\n}];"
+      },
+      "id": "91ccd151-b136-4de8-b95c-c099f253bb58",
+      "name": "Build Task Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeDueDate(input) {\n  const raw = String(input || '').trim();\n  if (!raw) return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)) return raw;\n\n  const match = raw.match(/^(\\d{1,2})[.\\/-](\\d{1,2})[.\\/-](\\d{2}|\\d{4})$/);\n  if (match) {\n    const dd = match[1].padStart(2, '0');\n    const mm = match[2].padStart(2, '0');\n    let yy = match[3];\n    if (yy.length === 2) yy = (Number(yy) >= 70 ? '19' : '20') + yy;\n    return `${yy}-${mm}-${dd}`;\n  }\n\n  const parsed = new Date(raw);\n  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);\n\n  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);\n}\n\nfunction normalizePriority(input) {\n  const value = String(input || '').toLowerCase().trim();\n  if (value.includes('urgent') || value.includes('high') || value.includes('highest') || value.includes('critical') || value.includes('hoch')) return 'high';\n  if (value.includes('low') || value.includes('niedrig')) return 'low';\n  return 'medium';\n}\n\nfunction normalizeCategory(input) {\n  const value = String(input || '').toLowerCase().trim();\n  if (value.includes('tech') || value.includes('technical') || value.includes('engineering') || value.includes('dev')) return 'tech';\n  return 'user';\n}\n\nfunction normalizeStatus(input) {\n  const value = String(input || '').toLowerCase().trim();\n  if (value.includes('progress')) return 'progress';\n  if (value.includes('feedback') || value.includes('review')) return 'feedback';\n  if (value.includes('done') || value.includes('finish')) return 'done';\n  return 'todo';\n}\n\nfunction parseAssigned(input) {\n  return String(input || '')\n    .split(/[;,\\n]/)\n    .map((value) => value.trim())\n    .filter(Boolean);\n}\n\nfunction parseSubtasks(input) {\n  return String(input || '')\n    .split(/\\n|;|\\.{3,}|,/)\n    .map((value) => value.replace(/^[-*]\\s*/, '').trim())\n    .filter(Boolean)\n    .map((title) => ({ title, done: false }));\n}\n\nfunction parseJsonLoose(input) {\n  if (input == null) return {};\n  if (typeof input === 'object') return input;\n  const text = String(input).trim();\n  if (!text) return {};\n\n  try {\n    return JSON.parse(text);\n  } catch {}\n\n  const fenced = text.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/i);\n  if (fenced && fenced[1]) {\n    try {\n      return JSON.parse(fenced[1]);\n    } catch {}\n  }\n\n  const first = text.indexOf('{');\n  const last = text.lastIndexOf('}');\n  if (first !== -1 && last > first) {\n    const candidate = text.slice(first, last + 1);\n    try {\n      return JSON.parse(candidate);\n    } catch {}\n  }\n\n  return {};\n}\n\nconst context = $('Build Task Payload').item.json;\nconst rawOutput =\n  $json.output ??\n  $json.response ??\n  $json.content ??\n  ($json.message && $json.message.content) ??\n  ($json.data && $json.data.output) ??\n  $json;\n\nconst extracted = parseJsonLoose(rawOutput);\n\nconst sourceTask = context.task || {};\nconst title = String(extracted.title || sourceTask.title || context.subject || 'Task').trim();\nconst description = String(extracted.description || sourceTask.description || context.bodyText || '').trim();\n\nreturn [{\n  json: {\n    taskId: context.taskId,\n    messageKey: context.messageKey,\n    messageIdRaw: context.messageIdRaw,\n    senderName: context.senderName,\n    senderEmail: context.senderEmail,\n    parsedFields: extracted,\n    task: {\n      id: context.taskId,\n      title,\n      description,\n      dueDate: normalizeDueDate(extracted.dueDateRaw),\n      category: normalizeCategory(extracted.categoryRaw),\n      priority: normalizePriority(extracted.priorityRaw),\n      status: normalizeStatus(extracted.statusRaw),\n      subtasks: parseSubtasks(extracted.subtasksRaw),\n      assigned: parseAssigned(extracted.assignedRaw),\n      source: 'email',\n      requester: context.senderName,\n      requesterEmail: context.senderEmail,\n      receivedAt: context.receivedAt,\n    },\n  },\n}];"
+      },
+      "id": "bc8b7168-a111-425b-94b9-df04a5415b62",
+      "name": "Ai Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2128,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "84e7cc88-c5c5-4445-8068-5f6f5c772fb1",
+      "name": "Is New Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2528,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/tasks/{{$('Ai Normalize').item.json.taskId}}.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Ai Normalize').item.json.task }}",
+        "options": {}
+      },
+      "id": "3e8fa7be-9a8b-42b5-874f-81682b091e6e",
+      "name": "Create Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3328,
+        3664
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/emailIndex/{{$('Ai Normalize').item.json.messageKey}}.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { taskId: $('Ai Normalize').item.json.taskId, messageId: $('Ai Normalize').item.json.messageIdRaw, createdAt: $now } }}",
+        "options": {}
+      },
+      "id": "d32059de-5a10-4cee-9f3d-0e4b7c664f47",
+      "name": "Save Email Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3552,
+        3696
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "dbd8750f-4b03-4847-8326-4e20bf01866b",
+      "name": "Already Processed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2784,
+        4096
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/requestQuota/{{$('Ai Normalize').item.json.senderEmail.toLowerCase().replace(/[.#$/\\\\[\\\\]]/g, '_').replace(/[^a-z0-9_-]/g, '_').slice(0, 120)}}/{{$now.setZone('Europe/Berlin').toISODate()}}.json",
+        "options": {}
+      },
+      "id": "7b33023a-e487-4549-bfd7-32f5263bffcb",
+      "name": "Check Request Quota",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json;\nlet count = 0;\n\nif (raw == null) {\n  count = 0;\n} else if (typeof raw === 'number') {\n  count = raw;\n} else if (typeof raw === 'string' && raw.trim() !== '') {\n  const asNum = Number(raw);\n  count = Number.isFinite(asNum) ? asNum : 0;\n} else if (raw && typeof raw === 'object') {\n  if (typeof raw.count === 'number') count = raw.count;\n  else if (typeof raw.value === 'number') count = raw.value;\n  else if (typeof raw.data === 'number') count = raw.data;\n  else if (typeof raw.body === 'number') count = raw.body;\n  else {\n    const values = Object.values(raw);\n    if (values.length === 1 && typeof values[0] === 'number') count = values[0];\n  }\n}\n\ncount = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;\nconst limit = 10;\nconst allowed = count < limit;\nreturn [{ json: { day: $now.setZone('Europe/Berlin').toISODate(), count, nextCount: count + 1, limit, allowed } }];"
+      },
+      "id": "95edc3ff-6b79-408b-bc6b-3df7d930a5bd",
+      "name": "Compute Request Quota",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "quota-1",
+              "leftValue": "={{ $json.allowed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ef620b5b-8551-4a3b-a238-71591086edbc",
+      "name": "Quota Available?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3072,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://join-b3c0f-default-rtdb.firebaseio.com/requestQuota/{{$('Ai Normalize').item.json.senderEmail.toLowerCase().replace(/[.#$/\\\\[\\\\]]/g, '_').replace(/[^a-z0-9_-]/g, '_').slice(0, 120)}}/{{$now.setZone('Europe/Berlin').toISODate()}}.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { count: $node['Compute Request Quota'].json['nextCount'], day: $node['Compute Request Quota'].json['day'], updatedAt: $now.toISO() } }}",
+        "options": {}
+      },
+      "id": "7f32647f-02b1-4828-b05a-62229ccceb36",
+      "name": "Save Request Quota",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3472,
+        4000
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c2360a45-aebd-4999-8cf1-3ec2e3c9959b",
+      "name": "Request Limit Reached",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3264,
+        4176
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "You extract structured task data from incoming emails. Return only task extraction content that can be parsed into title, description, dueDateRaw, priorityRaw, assignedRaw, categoryRaw, subtasksRaw, statusRaw."
+        }
+      },
+      "id": "27eed2e2-cbdd-49df-8b97-e766289cf26e",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1792,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Use this tool to think through ambiguous email details before extracting task fields."
+      },
+      "id": "823bb611-3923-4007-9873-9d0d1b99704c",
+      "name": "Think Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        1968,
+        4080
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemma4:31b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        4080
+      ],
+      "id": "d6b195c4-aa53-4cc5-83f1-8cdee2e2aaa4",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "4lBY722OTo99LwWx",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check Duplicate Index1": {
+      "main": [
+        [
+          {
+            "node": "Is New Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Task Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Task Payload": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Ai Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ai Normalize": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Index1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Email": {
+      "main": [
+        [
+          {
+            "node": "Check Request Quota",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Already Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Request Quota": {
+      "main": [
+        [
+          {
+            "node": "Compute Request Quota",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Request Quota": {
+      "main": [
+        [
+          {
+            "node": "Quota Available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quota Available?": {
+      "main": [
+        [
+          {
+            "node": "Create Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Request Limit Reached",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task": {
+      "main": [
+        [
+          {
+            "node": "Save Email Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Email Index": {
+      "main": [
+        [
+          {
+            "node": "Save Request Quota",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Request Quota": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "timeSavedPerExecution": 1,
+    "executionTimeout": 30
+  },
+  "versionId": "e6c956e3-3843-44c0-acb1-f79224c5bd89",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9bfd179ff4513628301fe91000b90dbcd4a31c12ce56a213ce15576ae4e29bf1"
+  },
+  "nodeGroups": [],
+  "id": "rcp6FhlONURBt75C",
+  "tags": []
+}
